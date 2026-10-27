@@ -25,7 +25,7 @@ unpacked application.
 OpenBotFR is **not an offline-only application**. AI providers can receive prompts and context;
 plugins and agents can access the network; browser tabs contact visited websites; and optional
 remote services and downloads contact their configured endpoints. Read the full
-[privacy policy](../../PRIVACY.md) for these limits.
+[privacy policy](https://github.com/daMustermann/openbotfr/blob/main/PRIVACY.md) for these limits.
 
 ## Windows improvements
 
@@ -46,8 +46,8 @@ remote services and downloads contact their configured endpoints. Read the full
 SHA-256 checksums:
 
 ```text
-bf485bb97461e70f50ead45ebf10b49d8ddf7325e5ae4069849104a9fa2b3aac  OpenBotFR-0.51.1-x64.exe
-dcceae579eeffc5723946854d9b8200f9ded8219e5955c3fd5de21cdb619f7d2  OpenBotFR-0.51.1-win-x64-unpacked.zip
+9ee1a0d29d18e158a4da7f4da7c095b7ef96b7ec103f8a1e08a423a7901a13ff  OpenBotFR-0.51.1-x64.exe
+ad3a8e76951404966c3949941120eef7f8bdbac59bfa5ad5008b7055efa447fb  OpenBotFR-0.51.1-win-x64-unpacked.zip
 ```
 
 ## Validation and limitations
@@ -61,4 +61,4 @@ an upgrade from an existing OpenBot installation, a real Kilo Code ACP session, 
 network capture have **not** been verified. Automatic application updates are disabled. Other
 platforms are outside this binary release. Do not use upstream installers as OpenBotFR installers.
 
-The project retains the [PolyForm Noncommercial 1.0.0 license](../../LICENSE).
+The project retains the [PolyForm Noncommercial 1.0.0 license](https://github.com/daMustermann/openbotfr/blob/main/LICENSE).
