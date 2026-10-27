@@ -383,7 +383,8 @@ export function toolProgressText(item: ThreadItem, completed: boolean): string |
   if (/(agent|delegate|message|send)/u.test(descriptor)) {
     return completed ? "Reviewing the other agent’s response…" : "Coordinating with another agent…";
   }
-  return completed ? TOOL_RESULT_PROGRESS : "Working through the next tool-assisted step…";
+  // An unknown tool gives no evidence of useful progress. Keep its trace without a filler line.
+  return null;
 }
 
 /** The provider account after the first that an agent runs on, or null for the provider's own sign-in. */

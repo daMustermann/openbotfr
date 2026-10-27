@@ -26,6 +26,7 @@ import {
   IPC_ENDPOINTS,
   LOCAL_SERVER_ID,
   type NotificationOpenedEvent,
+  SIGNED_OUT_CHANNEL_MEMBER_ID,
 } from "@openbot/contracts/ipc";
 import { isDynamicRecord } from "@openbot/contracts/runtime-values";
 import {
@@ -221,6 +222,7 @@ function lastOpened(): NotificationOpenedEvent {
 }
 
 const root = await mkdtemp(join(tmpdir(), "openbot-channel-notifications-"));
+let signedIn = false;
 const userData = join(root, "user-data");
 const unused = () => Effect.die(new Error("Not used by this check."));
 const agentBrowser: AgentBrowserHost = {
@@ -377,6 +379,7 @@ try {
         channels: agents.channels,
         // Signed out: the host user reads the channel as the signed-out member.
         getSignedInUser: () => {
+          if (signedIn) return { id: "local-reader", email: "reader@example.invalid", name: null, avatarUrl: null };
           throw new Error("Signed out.");
         },
         redeemCentralTicket: () => Effect.succeed(null),
@@ -408,6 +411,46 @@ try {
   const { agent, channel, threadId, host } = setup;
   const channels = agents?.channels;
   assert.ok(channels);
+  await step("A signed-out local user can load and mark an agent conversation read", async () => {
+    const ownThreadId = agentStore.ensureThreadIdNow(agent.id);
+    const messageId = randomUUID();
+    database.persistConversation(
+      {
+        agentId: agent.id,
+        threadId: ownThreadId,
+        activeTurnId: null,
+        revision: 0,
+        messages: [
+          {
+            id: messageId,
+            author: "assistant",
+            text: "Local reply",
+            createdAt: new Date().toISOString(),
+            status: "completed",
+          },
+        ],
+      },
+      "conversation.updated",
+    );
+    const snapshot = await runCauseEffect(host.readAgentConversation(agent.id));
+    const page = await runCauseEffect(host.readAgentConversationPage(agent.id));
+    assert.equal(snapshot.agentId, agent.id);
+    assert.equal(page.agentId, agent.id);
+    assert.equal(snapshot.messages[0]?.text, "Local reply");
+    const marked = await runCauseEffect(
+      host.markAgentConversationRead({ agentId: agent.id, throughMessageId: messageId }),
+    );
+    assert.equal(marked.unreadCount, 0);
+    assert.deepEqual(host.listAgentConversationReads()[agent.id], marked);
+    assert.equal(host.channelActor().id, SIGNED_OUT_CHANNEL_MEMBER_ID);
+    assert.equal(marked.throughMessageId, messageId);
+    signedIn = true;
+    assert.deepEqual(host.listAgentConversationReads()[agent.id], marked);
+    assert.equal(host.channelActor().id, "local-user:local-reader");
+    signedIn = false;
+    assert.deepEqual(host.listAgentConversationReads()[agent.id], marked);
+    return { loaded: true, paged: true, unreadCount: marked.unreadCount };
+  });
   const forwarders = createRendererForwarders({
     getMainWindow: () => mainWindow,
     getChatWindows: () => [],
@@ -654,10 +697,10 @@ try {
   await runCauseEffect(manager.stop()).catch(() => undefined);
   if (agents) await runCauseEffect(agents.stop()).catch(() => undefined);
   database.close();
-  await rm(root, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
   writeFileSync(join(OUT, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
   process.stdout.write(`Report: ${join(OUT, "report.json")}\n`);
+  await rm(root, { recursive: true, force: true, maxRetries: 5 });
 }
 
 if (!report.passed) process.exitCode = 1;

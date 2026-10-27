@@ -333,6 +333,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run test:desktop-notifications
 
+      - name: Run the local conversation and channel notification E2E test
+        if: ${{ !cancelled() }}
+        run: bun scripts/channel-notifications-e2e.ts
+
       - name: Run the routine pause and resume E2E test
         if: ${{ !cancelled() }}
         run: bun run test:routine-pause-resume
@@ -504,6 +508,7 @@ jobs:
             .openbot-build/sign-in-relay-paste-e2e/
             .openbot-build/server-mute-e2e/
             .openbot-build/desktop-notifications-e2e/
+            .openbot-build/channel-notifications-e2e/
             .openbot-build/routine-pause-resume-e2e/
             .openbot-build/routine-timezone-move-e2e/
             .openbot-build/routine-overnight-window-e2e/

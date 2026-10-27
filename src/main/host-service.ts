@@ -1648,14 +1648,22 @@ export class HostService extends EventEmitter<HostEvents> {
   }
 
   #currentAgentReaderId(): string {
-    const accountReaderId = `local-user:${this.#options.getSignedInUser().id}`;
+    let user: CentralAuthUser;
+    try {
+      user = this.#options.getSignedInUser();
+    } catch {
+      return SIGNED_OUT_CHANNEL_MEMBER_ID;
+    }
+    const accountReaderId = `local-user:${user.id}`;
     const memberId = this.#findCurrentMemberId();
     // Channel reads are keyed by the reader id this method answers, so they adopt with it.
     if (!memberId) {
+      this.#options.agents.adoptConversationReads(SIGNED_OUT_CHANNEL_MEMBER_ID, accountReaderId);
       this.#options.channels?.store.adoptReads(SIGNED_OUT_CHANNEL_MEMBER_ID, accountReaderId);
       return accountReaderId;
     }
     this.#options.agents.adoptConversationReads(accountReaderId, memberId);
+    this.#options.agents.adoptConversationReads(SIGNED_OUT_CHANNEL_MEMBER_ID, memberId);
     this.#options.channels?.store.adoptReads(accountReaderId, memberId);
     this.#options.channels?.store.adoptReads(SIGNED_OUT_CHANNEL_MEMBER_ID, memberId);
     return memberId;
