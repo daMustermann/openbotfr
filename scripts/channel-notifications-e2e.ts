@@ -19,6 +19,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   type AgentEvent,
+  type CentralAuthUser,
   type ChannelMessage,
   type ChannelTask,
   decodeChannelPage,
@@ -411,6 +412,79 @@ try {
   const { agent, channel, threadId, host } = setup;
   const channels = agents?.channels;
   assert.ok(channels);
+  await step("Local server settings save without an account and survive a restart", async () => {
+    const localAgents = agents;
+    assert.ok(localAgents);
+    const localPath = join(userData, "local-server-settings.json");
+    let localAccount: CentralAuthUser | null = null;
+    const makeLocalHost = (store: InstanceType<typeof TeamStore>) =>
+      new HostService({
+        appVersion: APP_VERSION,
+        store,
+        agents: localAgents,
+        agentsReady: () => Effect.void,
+        skills: { listInstalledForChatTags: () => Effect.succeed([]) },
+        sidebarLayout: sidebar,
+        mailbox,
+        browser: teamBrowser,
+        getSignedInUser: () => {
+          if (!localAccount) throw new Error("Signed out.");
+          return localAccount;
+        },
+        redeemCentralTicket: () => Effect.succeed(null),
+        sendTeamInviteEmail: unused,
+        registerRemoteHost: unused,
+        updateRemoteHostLogo: unused,
+        listRemoteMembers: unused,
+        listRemoteInvites: unused,
+        remoteControlPlaneUrl: "https://account.example.invalid",
+      });
+    const localStore = new TeamStore(localPath);
+    await runCauseEffect(localStore.initialize());
+    const localHost = makeLocalHost(localStore);
+    await runCauseEffect(localHost.applySignedInAccount(null));
+    const created = await runCauseEffect(
+      localHost.configure({
+        serverName: "Local server",
+        logo: {
+          mimeType: "image/png",
+          bytes: Buffer.from(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "base64",
+          ),
+        },
+      }),
+    );
+    assert.equal(created.configured, true);
+    assert.ok(created.logoUrl);
+    const updated = await runCauseEffect(localHost.updateLocalIdentity({ serverName: "Renamed local server" }));
+    assert.equal(updated.serverName, "Renamed local server");
+    assert.equal((await runCauseEffect(localHost.listMembers())).length, 1);
+    assert.deepEqual(await runCauseEffect(localHost.listInvites()), []);
+    assert.ok(localHost.getPresence());
+    const restartedStore = new TeamStore(localPath);
+    await runCauseEffect(restartedStore.initialize());
+    const restartedHost = makeLocalHost(restartedStore);
+    await runCauseEffect(restartedHost.applySignedInAccount(null));
+    assert.equal(restartedHost.getStatus().serverId, created.serverId);
+    assert.equal(restartedHost.getStatus().serverName, "Renamed local server");
+    assert.equal(restartedHost.getStatus().logoUrl, created.logoUrl);
+    const removedLogo = await runCauseEffect(restartedHost.updateLocalIdentity({ logo: null }));
+    assert.equal(removedLogo.logoUrl, null);
+    await assert.rejects(runCauseEffect(restartedHost.updateIdentity({ serverName: "Blocked remote change" })));
+    localAccount = { id: "server-owner", email: "owner@example.invalid", name: null, avatarUrl: null };
+    await runCauseEffect(restartedHost.applySignedInAccount(localAccount));
+    assert.equal(restartedHost.getStatus().serverId, created.serverId);
+    localAccount = null;
+    await runCauseEffect(restartedHost.applySignedInAccount(null));
+    assert.equal(restartedHost.getStatus().configured, false);
+    await assert.rejects(runCauseEffect(restartedHost.updateLocalIdentity({ serverName: "Blocked change" })));
+    localAccount = { id: "server-owner", email: "owner@example.invalid", name: null, avatarUrl: null };
+    await runCauseEffect(restartedHost.applySignedInAccount(localAccount));
+    assert.equal(restartedHost.getStatus().serverId, created.serverId);
+    assert.equal(restartedHost.getStatus().serverName, "Renamed local server");
+    return { saved: true, restartPreserved: true, imageAddedAndRemoved: true, accountIsolation: true };
+  });
   await step("A signed-out local user can load and mark an agent conversation read", async () => {
     const ownThreadId = agentStore.ensureThreadIdNow(agent.id);
     const messageId = randomUUID();

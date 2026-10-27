@@ -661,6 +661,22 @@ export class HostService extends EventEmitter<HostEvents> {
 
   readonly configure = Effect.fn("HostService.configure")(
     function* (this: HostService, input: ConfigureHostInput): Effect.fn.Return<HostStatus, RemoteWorkflowError> {
+      if (this.#signedInAccountId() === null) {
+        const identity = yield* this.#options.store.configure(
+          input.serverName,
+          randomBytes(16).toString("hex"),
+          randomBytes(32).toString("hex"),
+        );
+        if (this.#signedInAccountId() !== null) {
+          this.#options.store.unbindActiveHost();
+          this.#publishActiveHost(identity.serverId);
+          return yield* new RemoteWorkflowError({
+            cause: new Error(sourceText("error.team.accountChangedDuringCreate")),
+          });
+        }
+        this.#publishActiveHost(null);
+        return yield* this.updateLocalIdentity(input);
+      }
       const optionalRegisterRemoteHost = this.#options.registerRemoteHost;
       const optionalUpdateRemoteHostLogo = this.#options.updateRemoteHostLogo;
       const account = yield* remoteDecode(() => this.#options.getSignedInUser());
@@ -719,6 +735,19 @@ export class HostService extends EventEmitter<HostEvents> {
         }
       } else if (attempt0.success !== undefined) return attempt0.success;
       return this.getStatus();
+    },
+    (operation) => this.#provide(operation),
+  ).bind(this);
+
+  readonly updateLocalIdentity = Effect.fn("HostService.updateLocalIdentity")(
+    function* (this: HostService, input: UpdateHostIdentityInput): Effect.fn.Return<HostStatus, RemoteWorkflowError> {
+      if (this.#options.store.configured && this.#options.store.getOwnerEmail() === null) {
+        const identity = yield* this.#options.store.updateIdentity(input);
+        this.#publishActiveHost(identity.serverId);
+        this.#api.refreshIdentity();
+        return this.getStatus();
+      }
+      return yield* this.updateIdentity(input);
     },
     (operation) => this.#provide(operation),
   ).bind(this);
@@ -1364,11 +1393,11 @@ export class HostService extends EventEmitter<HostEvents> {
   });
 
   /**
-   * Whether members and invitations live in the account directory. A local development host keeps
+   * Whether members and invitations live in the account directory. A local host without an account keeps
    * them in its own team file, so every read and write of them goes where the others went.
    */
   #usesAccountDirectory(): boolean {
-    return !this.#options.localDevelopmentHost;
+    return !this.#options.localDevelopmentHost && this.#options.store.getOwnerEmail() !== null;
   }
 
   /** The account directory that holds invitations, or `null` for this machine's own team file. */
