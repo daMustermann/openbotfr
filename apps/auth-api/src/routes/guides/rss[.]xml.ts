@@ -3,5 +3,5 @@ import { GUIDES_COLLECTION } from "../../lib/guides";
 import { contentRssResponse } from "../../server/content-feed";
 
 export const Route = createFileRoute("/guides/rss.xml")({
-  server: { handlers: { GET: () => contentRssResponse(GUIDES_COLLECTION) } },
+  server: { handlers: { GET: ({ request }) => contentRssResponse(GUIDES_COLLECTION, request) } },
 });

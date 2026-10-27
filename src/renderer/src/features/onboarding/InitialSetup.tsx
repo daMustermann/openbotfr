@@ -204,11 +204,13 @@ export function InitialSetup(props: InitialSetupProps) {
                   </svg>
                 </Button>
               </Show>
-              <span class="initial-setup-account">
-                <i aria-hidden="true" />
-                {props.accountEmail}
-              </span>
-              <Show when={props.onLogout}>
+              <Show when={props.accountEmail}>
+                <span class="initial-setup-account">
+                  <i aria-hidden="true" />
+                  {props.accountEmail}
+                </span>
+              </Show>
+              <Show when={props.accountEmail && props.onLogout}>
                 <Button
                   variant="ghost"
                   type="button"

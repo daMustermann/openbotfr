@@ -2,7 +2,6 @@ import { Effect } from "effect";
 import { routeRequest as routeHostedSiteRequest } from "../../../site-router/src/index";
 import { type AuthRetentionResult, pruneExpiredAuthData } from "./auth-data-retention";
 import { BillingSales } from "./billing-sales";
-import { captureBillingSnapshot } from "./billing-snapshots";
 import { canonicalHostRedirect, permanentTrailingSlashRedirect } from "./canonical-redirect";
 import { runApiEffect } from "./effect-runtime";
 import { createHostedBilling } from "./hosted-billing";
@@ -11,7 +10,6 @@ import { HostedSiteService } from "./hosted-site-service";
 import { enforceMarketplaceIngress, MarketplaceRateLimitError } from "./marketplace-request-policy";
 import { pageMarkdownResponse } from "./page-markdown";
 import { deliverPendingRemoteAuthEvents, RemoteControlPlane, type RemoteFailure } from "./remote-control-plane";
-import { SalesAnalyticsDelivery } from "./sales-analytics-delivery";
 import type { WorkerBindings } from "./types";
 
 type WorkerFetch = (request: Request) => Response | Promise<Response>;
@@ -107,12 +105,11 @@ export function createWorkerHandler(
             Effect.exit(
               bindings.SITES ? new HostedSiteService(bindings.DB, bindings.SITES).cleanup(now) : Effect.succeed(null),
             ),
-            Effect.exit(tickSalesAnalytics(bindings, now)),
           ],
           { concurrency: "unbounded" },
         ).pipe(
-          Effect.flatMap(([retentionExit, deliveryExit, sitesExit, salesExit]) =>
-            Effect.all([retentionExit, deliveryExit, sitesExit, salesExit]),
+          Effect.flatMap(([retentionExit, deliveryExit, sitesExit]) =>
+            Effect.all([retentionExit, deliveryExit, sitesExit]),
           ),
         ),
       );
@@ -125,22 +122,6 @@ export function createWorkerHandler(
 type SalesBindings = Pick<WorkerBindings, "DB"> &
   Partial<Pick<WorkerBindings, "STRIPE_SECRET_KEY" | "OPENPANEL_CLIENT_ID" | "OPENPANEL_CLIENT_SECRET">>;
 
-const tickSalesAnalytics = Effect.fn("SalesAnalytics.tick")(function* (bindings: SalesBindings, now: number) {
-  if (!bindings.OPENPANEL_CLIENT_ID?.trim() || !bindings.OPENPANEL_CLIENT_SECRET?.trim()) return;
-  const options = {
-    database: bindings.DB,
-    clientId: bindings.OPENPANEL_CLIENT_ID,
-    clientSecret: bindings.OPENPANEL_CLIENT_SECRET,
-    fetch: (input: string, init: RequestInit) => fetch(input, init),
-  };
-  const payments = yield* Effect.exit(new BillingSales(options).processPending());
-  const snapshot = yield* Effect.exit(captureBillingSnapshot(bindings, now));
-  const result = yield* new SalesAnalyticsDelivery(options).drain();
-  console.info("Sales analytics delivery completed.", result);
-  yield* payments;
-  yield* snapshot;
-});
-
 const checkoutReturnResponse = Effect.fn("BillingSales.returnResponse")(function* (
   request: Request,
   bindings: Partial<SalesBindings>,
@@ -149,7 +130,7 @@ const checkoutReturnResponse = Effect.fn("BillingSales.returnResponse")(function
   const token = url.searchParams.get("token");
   // Only a server plan Checkout has a return token, so the fallback page names that kind.
   let destination = "/billing/return?kind=plan";
-  if (token && bindings.DB && bindings.OPENPANEL_CLIENT_ID && bindings.OPENPANEL_CLIENT_SECRET) {
+  if (token && bindings.DB) {
     const sales = new BillingSales({
       database: bindings.DB,
       clientId: bindings.OPENPANEL_CLIENT_ID,

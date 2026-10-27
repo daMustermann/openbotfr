@@ -14,10 +14,9 @@ let loading: Promise<void> | null = null;
 
 export function loadAnalyticsPreference(): Promise<void> {
   loading ??= SecureStore.getItemAsync(key)
-    .then((stored) => {
-      const enabled = stored === null || stored === "true";
-      mobileAnalytics.setEnabled(enabled);
-      useAnalyticsPreference.setState({ enabled, ready: true });
+    .then(() => {
+      mobileAnalytics.setEnabled(false);
+      useAnalyticsPreference.setState({ enabled: false, ready: true });
     })
     .catch(() => {
       // An unreadable preference must not turn tracking on.

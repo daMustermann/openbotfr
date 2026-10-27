@@ -12,7 +12,7 @@ const CLAUDE_HELP = "https://support.claude.com/en/articles";
 export const CLAUDE_COWORK_COMPARISON: Comparison = {
   rival: { name: "Claude Cowork", mark: "claude-cowork" },
   answer:
-    "Choose OpenBot if you want your agents on your own computer, with Claude and the other AI plans you already pay for, such as ChatGPT, Gemini or Grok: the app is free. Choose Claude Cowork if you use only Claude, and you want an agent in Anthropic's cloud that keeps working with no computer of yours on.",
+    "Choose OpenBotFR if you want your agents on your own computer, with Claude and the other AI plans you already pay for, such as ChatGPT, Gemini or Grok: the app is free. Choose Claude Cowork if you use only Claude, and you want an agent in Anthropic's cloud that keeps working with no computer of yours on.",
   chooseOpenBot: [
     "You want Claude, ChatGPT, Gemini, Grok, Cursor, Cline, Muse Code and Pi agents in one team, or your own model.",
     "Your files and chats must stay on your own computer, not in Anthropic's cloud.",
@@ -38,7 +38,7 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
     {
       icon: "laptop",
       topic: "Where agents work",
-      openbot: "On the computer that runs OpenBot.",
+      openbot: "On the computer that runs OpenBotFR.",
       rival:
         "In Anthropic's cloud. From 6 October 2026, new tasks on Pro and Max run only in the cloud; tasks already started on your computer stay there.",
       better: "openbot",
@@ -98,7 +98,7 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
       icon: "lock",
       topic: "Your data",
       openbot:
-        "Workspaces, chats and files stay in a database on your computer. The provider you choose gets the requests you send. Product analytics, with no chat content, are on by default and linked to your account when you sign in; you can turn them off.",
+        "Workspaces, chats and files stay on the computer that runs OpenBotFR. The provider you choose gets only the requests you send. OpenBotFR sends no product analytics or automatic error reports.",
       rival:
         "Cloud sessions and their files are saved to your Claude account; local files that a cloud session opens are processed on Anthropic's servers. On Pro and Max, you can opt out of model training.",
       better: "openbot",
@@ -136,7 +136,7 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
     },
   ],
   intro:
-    "Claude Cowork is Anthropic's agent for work beyond code, built on the same agentic approach as Claude Code. It started in January 2026 as a research preview on the Mac, and on 16 September 2026 Anthropic started to roll it into Claude itself, first for Pro and Max. OpenBot also works with your Claude plan: Claude Code is one of its agents. The difference is where the agents run and how many providers you can use. Claude Cowork runs in Anthropic's cloud with Claude only. OpenBot runs a team of agents on your own computer, with Claude and the other AI plans you choose.",
+    "Claude Cowork is Anthropic's agent for work beyond code, built on the same agentic approach as Claude Code. It started in January 2026 as a research preview on the Mac, and on 16 September 2026 Anthropic started to roll it into Claude itself, first for Pro and Max. OpenBotFR also works with your Claude plan: Claude Code is one of its agents. The difference is where the agents run and how many providers you can use. Claude Cowork runs in Anthropic's cloud with Claude only. OpenBotFR runs a team of agents on your own computer, with Claude and the other AI plans you choose.",
   sections: [
     {
       title: "Models and the plans you pay for",
@@ -167,7 +167,7 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
     {
       title: "Data and privacy",
       openbot:
-        "OpenBot keeps workspaces, conversations, attachments and browser data in a SQLite database on the computer that runs it. OpenBot keeps no other copy. On a hosted OpenBot server, the database is on that server in the EU. An account holds your profile, team memberships, invitations, sign-in sessions, the settings that let devices find each other, and any agent templates that you publish. Product analytics, which never include chat content, are on by default and linked to your account when you sign in; you can turn them off in Settings.",
+        "OpenBotFR keeps workspaces, conversations, attachments and browser data in SQLite on the computer that runs it. The desktop works without an account. Remote access and accounts use optional services that you host yourself. OpenBotFR sends no product analytics or automatic error reports.",
       rival:
         "Cloud sessions and their files are saved to your Claude account. Local files that a cloud session opens through the desktop app are processed on Anthropic's servers, not only on your computer. On Pro and Max, you can opt out of model training; if you allow it, Anthropic can keep your data for up to 5 years. A deleted conversation leaves Anthropic's storage within 30 days.",
       better: "openbot",
@@ -175,19 +175,19 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
   ],
   faq: [
     {
-      question: "Is OpenBot an alternative to Claude Cowork?",
+      question: "Is OpenBotFR an alternative to Claude Cowork?",
       answer:
-        "Yes, if you want your agents on your own computer. Both give you agents that do the work, and both work with your Claude plan. OpenBot runs a team of agents on your computer, with Claude Code and the other providers you choose. Claude Cowork is Anthropic's agent in its cloud, with Claude only.",
+        "Yes, if you want your agents on your own computer. Both give you agents that do the work, and both work with your Claude plan. OpenBotFR runs a team of agents on your computer, with Claude Code and the other providers you choose. Claude Cowork is Anthropic's agent in its cloud, with Claude only.",
     },
     {
-      question: "Why choose OpenBot over Claude Cowork?",
+      question: "Why choose OpenBotFR over Claude Cowork?",
       answer:
-        "Your agents can use Claude, ChatGPT, Gemini or Grok, or your own model, and they work together as a team. OpenBot keeps your workspaces, chats and files on your own computer. The app is free, and its source code is on GitHub. Claude Cowork is the better fit when you use only Claude and want an agent with no computer of yours to keep on.",
+        "Your agents can use Claude, ChatGPT, Gemini or Grok, or your own model, and they work together as a team. OpenBotFR keeps your workspaces, chats and files on your own computer. The app is free, and its source code is on GitHub. Claude Cowork is the better fit when you use only Claude and want an agent with no computer of yours to keep on.",
     },
     {
-      question: "Can I use my Claude plan with OpenBot?",
+      question: "Can I use my Claude plan with OpenBotFR?",
       answer:
-        "Yes. OpenBot runs Claude Code with your own Claude plan, so the Claude plan that you pay for works in OpenBot too. Next to it, Codex uses your ChatGPT plan, Gemini a Google AI Pro or Ultra plan, Grok CLI your Grok account or an xAI API key, Cursor CLI your Cursor plan, Cline your Cline account, and Muse Code your Meta account. When a plan reaches its limit, an agent can move to a backup model on another provider. OpenBot adds no charge of its own.",
+        "Yes. OpenBotFR runs Claude Code with your own Claude plan, so the Claude plan that you pay for works in OpenBotFR too. Next to it, Codex uses your ChatGPT plan, Gemini a Google AI Pro or Ultra plan, Grok CLI your Grok account or an xAI API key, Cursor CLI your Cursor plan, Cline your Cline account, and Muse Code your Meta account. When a plan reaches its limit, an agent can move to a backup model on another provider. OpenBotFR adds no charge of its own.",
     },
     {
       question: "Is Claude Cowork still a separate product?",
@@ -202,17 +202,17 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
     {
       question: "Is Claude Cowork free?",
       answer:
-        "No. Claude Cowork needs a paid Claude plan: Pro costs $17 a month with annual billing or $20 monthly, Max $100 or $200 a month, and Team $20 or $25 a seat for standard seats. OpenBot is free for noncommercial use, and it uses the plans you already pay for.",
+        "No. Claude Cowork needs a paid Claude plan: Pro costs $17 a month with annual billing or $20 monthly, Max $100 or $200 a month, and Team $20 or $25 a seat for standard seats. OpenBotFR is free for noncommercial use, and it uses the plans you already pay for.",
     },
     {
       question: "Do agents keep working when my laptop is closed?",
       answer:
-        "Yes, with both. Claude Cowork works in Anthropic's cloud, so no computer of yours must stay on. OpenBot agents work on the computer or server that runs OpenBot: keep that computer on, or use a hosted OpenBot server, and connect from your laptop or phone.",
+        "Yes, with both. Claude Cowork works in Anthropic's cloud, so no computer of yours must stay on. OpenBotFR agents work on the computer or server that runs OpenBotFR: keep that computer on, or run your own server, and connect from your laptop or phone.",
     },
     {
       question: "Is Claude Cowork open source?",
       answer:
-        "No. Claude Cowork is closed source, and Anthropic's terms prohibit reverse engineering. Its plugins are on GitHub under the Apache License 2.0. OpenBot's source code is on GitHub under the PolyForm Noncommercial License 1.0.0.",
+        "No. Claude Cowork is closed source, and Anthropic's terms prohibit reverse engineering. Its plugins are on GitHub under the Apache License 2.0. OpenBotFR's source code is on GitHub under the PolyForm Noncommercial License 1.0.0.",
     },
   ],
   sources: [
@@ -276,8 +276,8 @@ export const CLAUDE_COWORK_COMPARISON: Comparison = {
     },
     { label: "Claude voice mode", url: "https://support.claude.com/en/articles/11101966-use-voice-mode" },
     { label: "Claude Tag overview", url: "https://claude.com/docs/claude-tag/overview" },
-    { label: "OpenBot privacy notes", url: OPENBOT_LINKS.privacy },
-    { label: "OpenBot source code", url: OPENBOT_LINKS.repository },
+    { label: "OpenBotFR privacy notes", url: OPENBOT_LINKS.privacy },
+    { label: "OpenBotFR source code", url: OPENBOT_LINKS.repository },
   ],
   checkedAt: "2026-10-02",
 };

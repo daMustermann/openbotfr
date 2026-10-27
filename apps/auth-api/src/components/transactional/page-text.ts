@@ -88,13 +88,7 @@ export function billingReturnText(t: AppTranslate) {
   };
 }
 
-/** A private-use character that marks where the contact link goes in `writeTo`. */
-const EMAIL_MARKER = "";
-
 export function reportSiteText(t: AppTranslate) {
-  const [writeToBefore = "", writeToAfter = ""] = t("sitePage.report.writeTo", { email: EMAIL_MARKER }).split(
-    EMAIL_MARKER,
-  );
   return {
     pageTitle: t("sitePage.report.pageTitle"),
     title: t("sitePage.report.title"),
@@ -117,8 +111,6 @@ export function reportSiteText(t: AppTranslate) {
     sending: t("sitePage.report.sending"),
     tooMany: t("sitePage.report.tooMany"),
     sendFailed: t("sitePage.report.sendFailed"),
-    /** The sentence around the contact link: the text before the link and the text after it. */
-    writeTo: { before: writeToBefore, after: writeToAfter },
     sentTitle: t("sitePage.report.sentTitle"),
     sentBody: t("sitePage.report.sentBody"),
     home: t("sitePage.report.home"),

@@ -1,4 +1,4 @@
-import { createAgentTemplateShareUrl, isAgentTemplateId, isAgentTemplateShareOrigin } from "./agent-template-links";
+import { isAgentTemplateId, normalizeAgentTemplateShareUrl } from "./agent-template-links";
 import { isAvatarMimeType, isValidAvatarImage } from "./avatar-images";
 import { INPUT_LIMITS } from "./input-limits";
 import { type AvatarHue, isAvatarHue, isAvatarSeed } from "./ipc-agent-identity";
@@ -297,7 +297,7 @@ export function decodeHostAgentTemplatePreview(value: unknown): AgentTemplatePre
   };
 }
 
-/** The link is rebuilt from the id on `openbot.run` or the local Worker, so a host cannot name another address. */
+/** Rebuild the link from its id; private account services use an app link. */
 export function decodeHostAgentTemplatePublication(value: unknown): AgentTemplatePublication {
   if (
     !isDynamicRecord(value) ||
@@ -307,16 +307,9 @@ export function decodeHostAgentTemplatePublication(value: unknown): AgentTemplat
     !isString(value.publishedAt)
   )
     throw new Error("The host returned an invalid agent publication.");
-  let origin: string;
-  try {
-    origin = new URL(value.shareUrl).origin;
-  } catch {
-    throw new Error("The host returned an invalid agent link.");
-  }
-  if (!isAgentTemplateShareOrigin(origin)) throw new Error("The host returned an invalid agent link.");
   return {
     templateId: value.templateId,
-    shareUrl: createAgentTemplateShareUrl(value.templateId, origin),
+    shareUrl: normalizeAgentTemplateShareUrl(value.shareUrl, value.templateId),
     publishedAt: value.publishedAt,
   };
 }

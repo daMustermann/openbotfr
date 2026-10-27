@@ -1,5 +1,4 @@
 import { AppLogo } from "@openbot/brand";
-import { readFirstTouch } from "@openbot/contracts/first-touch";
 import { isDynamicRecord, isOneOf } from "@openbot/contracts/runtime-values";
 import { createFileRoute } from "@tanstack/solid-router";
 import { onSettled, Show } from "solid-js";
@@ -37,28 +36,12 @@ export const Route = createFileRoute("/billing/return")({
   component: BillingReturn,
 });
 
-/**
- * After a desktop checkout, sends the Checkout Session ID with the first website visit of this
- * browser, so that reports can name the source of the account. The ID is then removed from the URL.
- */
-function sendCheckoutAttribution(): void {
+/** Remove the Checkout Session ID from the browser URL after the return. */
+function clearCheckoutSessionFromUrl(): void {
   const url = new URL(window.location.href);
-  const sessionId = url.searchParams.get("checkout");
-  if (!sessionId) return;
+  if (!url.searchParams.has("checkout")) return;
   url.searchParams.delete("checkout");
   window.history.replaceState(window.history.state, "", url);
-  const firstTouch = readFirstTouch(() => window.localStorage, Date.now());
-  if (!firstTouch) return;
-  void fetch("/api/browser/checkout-attribution", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    keepalive: true,
-    // The page has no referrer; the account service still needs the Origin header of this site.
-    referrerPolicy: "same-origin",
-    headers: { "Content-Type": "application/json", "X-OpenBot-Browser": "1" },
-    body: JSON.stringify({ sessionId, firstTouch }),
-  }).catch(() => undefined);
 }
 
 function BillingReturn() {
@@ -66,7 +49,7 @@ function BillingReturn() {
   const page = Route.useLoaderData();
   const text = () => page().text;
   onSettled(() => {
-    sendCheckoutAttribution();
+    clearCheckoutSessionFromUrl();
     return landingAnalytics.startBillingReturn(document, window.location.hostname, {
       cancelled: search().cancelled === true,
       kind: search().kind,

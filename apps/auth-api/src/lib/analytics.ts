@@ -260,8 +260,9 @@ const EVENT_PROPERTY_ALLOWLIST = {
  */
 const PENDING_EVENT_LIMIT = 4;
 
-function shouldEnableLandingAnalytics(hostname: string, productionBuild: boolean): boolean {
-  return productionBuild && hostname === "openbot.run";
+function shouldEnableLandingAnalytics(_hostname: string, _productionBuild: boolean): boolean {
+  // OpenBotFR does not send landing-page analytics.
+  return false;
 }
 
 class LandingAnalytics {

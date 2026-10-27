@@ -132,9 +132,11 @@ registry date, and keep the pinned command. An upstream install writes `openbot-
 file it installed, and every start verifies that record and the binary's `--version` before the
 install is used. The newest version in the store that verifies is the one that runs.
 
-`provider-runtime-blocklist.json` on `main` names versions no installation may offer. It stops a
-broken upstream release without an OpenBot release. It suppresses an offer only: it does not remove
-a version a user already installed. A list that cannot be read blocks nothing.
+Each OpenBotFR build includes `provider-runtime-blocklist.json`. The desktop app reads this
+bundled list without a network request. Set `OPENBOTFR_RUNTIME_BLOCKLIST_URL` to an HTTPS URL
+without credentials to fetch an operator-managed list on each provider update check. The
+list suppresses offers but does not remove versions already installed. A list that cannot be read
+blocks nothing.
 
 The `Provider CLI canary` workflow (`.github/workflows/provider-cli-canary.yml`) finds a broken
 release before many users install it. Every six hours it reads the newest release of each provider

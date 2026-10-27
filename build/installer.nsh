@@ -2,6 +2,12 @@
 ; openbot:// scheme only on macOS and Linux, so the installer writes the Windows key itself.
 ; The application writes the same key at each start (`src/main/index.ts`).
 
+; Keep the released installation folder name when the displayed product name changes.
+; Both the directory page and the install step check APP_FILENAME. Changing it to
+; OpenBotFR would put an update inside a new subfolder instead of the old installation.
+!undef APP_FILENAME
+!define APP_FILENAME "OpenBot"
+
 ; A chosen folder such as D:\OpenBot inherits Modify rights for "Authenticated Users" from the drive
 ; root, so another account could replace OpenBot.exe. Give access only to this user, SYSTEM and
 ; Administrators, as %LOCALAPPDATA% does, and reset the files to inherit it. This runs before the
@@ -38,7 +44,7 @@
 !macroend
 
 !macro customInstall
-  WriteRegStr SHCTX "Software\Classes\openbot" "" "URL:OpenBot invitations"
+  WriteRegStr SHCTX "Software\Classes\openbot" "" "URL:OpenBotFR invitations"
   WriteRegStr SHCTX "Software\Classes\openbot" "URL Protocol" ""
   WriteRegStr SHCTX "Software\Classes\openbot\DefaultIcon" "" "$appExe,0"
   WriteRegStr SHCTX "Software\Classes\openbot\shell\open\command" "" '"$appExe" "%1"'

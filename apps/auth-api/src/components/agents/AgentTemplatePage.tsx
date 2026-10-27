@@ -132,19 +132,19 @@ export function AgentTemplatePage(props: AgentTemplatePageProps) {
             </Show>
 
             <hr class="agent-share-divider" />
-            <p class="agent-share-notice">Made by another OpenBot user. It can act on your behalf once added.</p>
+            <p class="agent-share-notice">Made by another OpenBotFR user. It can act on your behalf once added.</p>
             <div class="agent-share-action">
               <PluginOpenButtons
                 href={openUrl()}
-                label="Add to OpenBot"
-                downloadCopy={`${props.template.name} is added from inside OpenBot. Get the app, then open this link again.`}
+                label="Add to OpenBotFR"
+                downloadCopy={`${props.template.name} is added from inside OpenBotFR. Get the app, then open this link again.`}
               />
             </div>
           </div>
         </article>
 
         <p class="agent-share-fallback">
-          OpenBot didn't open? <Link to="/download">Download it</Link>, <a href={openUrl()}>open the app</a>, or{" "}
+          OpenBotFR didn't open? <Link to="/download">Download it</Link>, <a href={openUrl()}>open the app</a>, or{" "}
           <a href={createWebAppAgentTemplatePath(props.template.id)}>open in browser</a>.
         </p>
       </main>

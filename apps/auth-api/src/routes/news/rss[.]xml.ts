@@ -3,5 +3,5 @@ import { NEWS_COLLECTION } from "../../lib/news";
 import { contentRssResponse } from "../../server/content-feed";
 
 export const Route = createFileRoute("/news/rss.xml")({
-  server: { handlers: { GET: () => contentRssResponse(NEWS_COLLECTION) } },
+  server: { handlers: { GET: ({ request }) => contentRssResponse(NEWS_COLLECTION, request) } },
 });

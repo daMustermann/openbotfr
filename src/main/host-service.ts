@@ -1391,11 +1391,6 @@ export class HostService extends EventEmitter<HostEvents> {
         return yield* new RemoteWorkflowError({ cause: new Error(sourceText("error.host.nameBeforePublish")) });
       const remoteInviteApiUrl = this.#remoteInviteApiUrl();
       if (remoteInviteApiUrl && optionalCreateRemoteInvite) {
-        // The account service cannot email links for a self-hosted service.
-        if (input.email && selfHostedApiOrigin(remoteInviteApiUrl))
-          return yield* new RemoteWorkflowError({
-            cause: new Error(sourceText("error.remote.selfHostedInviteNoEmail")),
-          });
         const invite = yield* optionalCreateRemoteInvite(identity.serverId, input);
         // The invitation belongs to the account that asked for it, so it stays on that host
         // and shows up in its invite list. What must not happen is emailing it under the new

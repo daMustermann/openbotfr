@@ -8,7 +8,7 @@ import { currentText } from "../../../text";
 
 interface ProfileStoreProps {
   open: boolean;
-  account: CentralAuthUser;
+  account: CentralAuthUser | null;
   onUpdateAccountName: (name: string) => Promise<void>;
   onUpdateAccountAvatar: (image: AvatarImageInput | null) => Promise<void>;
   onListAccountSessions?: () => Promise<AccountSession[]>;
@@ -61,7 +61,8 @@ export function createSettingsProfileStore(props: ProfileStoreProps, isActive: (
   let nameInput: HTMLInputElement | undefined;
   let sessionsRevision = 0;
 
-  const accountName = () => props.account.name?.trim() || props.account.email.split("@")[0] || props.account.email;
+  const accountName = () =>
+    props.account?.name?.trim() || props.account?.email.split("@")[0] || props.account?.email || "";
 
   async function refreshSessions() {
     if (!props.onListAccountSessions) return;
@@ -119,7 +120,7 @@ export function createSettingsProfileStore(props: ProfileStoreProps, isActive: (
   }
 
   createEffect(
-    () => ({ open: props.open, active: isActive(), accountId: props.account.id, list: props.onListAccountSessions }),
+    () => ({ open: props.open, active: isActive(), accountId: props.account?.id, list: props.onListAccountSessions }),
     ({ open, active, list }) => {
       sessionsRevision += 1;
       setPanels((state) => {
@@ -134,7 +135,7 @@ export function createSettingsProfileStore(props: ProfileStoreProps, isActive: (
   );
 
   createEffect(
-    () => props.account.name,
+    () => props.account?.name,
     () => {
       const name = untrack(accountName);
       setPanels((state) => {

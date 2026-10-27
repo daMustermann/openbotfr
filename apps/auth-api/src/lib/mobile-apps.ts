@@ -1,6 +1,4 @@
 import type { MobilePlatformLogoVariant } from "@openbot/brand";
-import { ANDROID_PLAY_STORE_URL } from "@openbot/ui/features/mobile-app/android-play-store";
-import { IOS_APP_STORE_URL } from "@openbot/ui/features/mobile-app/ios-app-store";
 import type { PlatformNavigator } from "./download-platforms";
 
 export type MobilePlatform = MobilePlatformLogoVariant;
@@ -11,26 +9,27 @@ export interface MobileAppDetails {
   href: string;
   id: MobilePlatform;
   label: string;
-  status: "Available";
+  status: "Source only";
 }
 
-/** The phone apps on the landing cards. They open a store page, so the links leave the site. */
+/** The fork does not publish mobile store packages. Link to its mobile source. */
+const MOBILE_SOURCE_URL = "https://github.com/daMustermann/openbotfr/tree/main/apps/mobile";
 export const MOBILE_APPS: Record<MobilePlatform, MobileAppDetails> = {
   ios: {
     id: "ios",
     label: "iPhone",
-    status: "Available",
-    description: "App Store · Connects to your computer",
-    action: "Download on the App Store",
-    href: IOS_APP_STORE_URL,
+    status: "Source only",
+    description: "Build from source · Optional self-hosted remote access",
+    action: "View iPhone source",
+    href: MOBILE_SOURCE_URL,
   },
   android: {
     id: "android",
     label: "Android",
-    status: "Available",
-    description: "Google Play · Connects to your computer",
-    action: "Get it on Google Play",
-    href: ANDROID_PLAY_STORE_URL,
+    status: "Source only",
+    description: "Build from source · Optional self-hosted remote access",
+    action: "View Android source",
+    href: MOBILE_SOURCE_URL,
   },
 };
 

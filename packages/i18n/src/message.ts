@@ -112,6 +112,8 @@ export function createTranslate<Source extends MessageCatalog>(input: {
    * renders "1 replies".
    */
   sourceLocale: string;
+  /** Rename the product in visible text. Keep released source messages unchanged. */
+  displayBrand?: boolean;
 }): Translate<Source> {
   return function translate<Key extends keyof Source & string>(key: Key, ...args: ParamsArgument<Source[Key]>): string {
     const params = args[0];
@@ -123,6 +125,7 @@ export function createTranslate<Source extends MessageCatalog>(input: {
     if (message === undefined) return key;
     const locale = translated === undefined ? input.sourceLocale : input.locale;
     const text = typeof message === "string" ? message : selectForm(message, countOf(values), locale);
-    return values ? interpolate(text, values) : text;
+    const displayText = input.displayBrand ? text.replace(/\bOpenBot\b/gu, "OpenBotFR") : text;
+    return values ? interpolate(displayText, values) : displayText;
   };
 }

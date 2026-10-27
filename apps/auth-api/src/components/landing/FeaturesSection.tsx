@@ -311,7 +311,7 @@ export function FeaturesSection() {
       </svg>
       <div class="landing-section-inner">
         <header class="landing-section-heading">
-          <h2 id="features-title">What OpenBot does</h2>
+          <h2 id="features-title">What OpenBotFR does</h2>
           <p>One desktop app for a team of AI agents that work on your computer, with the AI plans you have.</p>
         </header>
         <ul class="landing-features-grid">

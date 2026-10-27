@@ -48,7 +48,7 @@ export function translateFor(locale: TranslatedLocale): AppTranslate {
   if (cached) return cached;
   const translation = appTranslation(locale);
   if (!translation) return translateFor("en");
-  const translate = createTranslate({ source: en, translation, locale, sourceLocale: "en" });
+  const translate = createTranslate({ source: en, translation, locale, sourceLocale: "en", displayBrand: true });
   translators.set(locale, translate);
   return translate;
 }

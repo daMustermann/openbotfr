@@ -23,6 +23,8 @@ export interface WorkerBindings {
   EMAIL_SMTP_USERNAME?: string;
   EMAIL_SMTP_PASSWORD?: string;
   EMAIL_FROM?: string;
+  /** Explicit HTTPS account API origin for self-hosted invitation email. */
+  SELF_HOSTED_PUBLIC_ORIGIN?: string;
   EMAIL_DELIVERY_WEBHOOK_URL?: string;
   EMAIL_DELIVERY_WEBHOOK_SECRET?: string;
   SKILLS_ADMIN_TOKEN?: string;
@@ -191,6 +193,7 @@ export interface TeamInviteEmailDelivery {
     inviterEmail: string;
     serverName: string;
     inviteUrl: string;
+    selfHostedApiOrigin?: string | undefined;
     role: "admin" | "member";
   }): Effect.Effect<void, EmailDeliveryError | SmtpFailure>;
 }

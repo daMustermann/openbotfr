@@ -30,6 +30,7 @@ export function mobileTranslateFor(locale: TranslatedLocale): MobileTranslate {
     translation: mobileCatalog(locale),
     locale,
     sourceLocale: "en",
+    displayBrand: true,
   });
   translators.set(locale, translate);
   return translate;

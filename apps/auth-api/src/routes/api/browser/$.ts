@@ -11,6 +11,7 @@ import {
   requestHostedSiteService,
   requestRemoteControlPlane,
   requestRemoteSignalUrl,
+  requestSelfHostedInviteOrigin,
   requestTeamInviteEmailDelivery,
 } from "../../../server/request-auth";
 import { requestSourceIp } from "../../../server/source-ip";
@@ -22,6 +23,7 @@ function handle({ request }: { request: Request }) {
     hostLogo: (hostId, version) => readHostLogo(requestAvatarBucket(), hostId, version),
     hosting: requestHostedServerService,
     inviteEmailDelivery: requestTeamInviteEmailDelivery,
+    inviteEmailOrigin: requestSelfHostedInviteOrigin,
     attribution: requestAccountAttribution,
     billing: requestBillingService,
     avatarBucket: requestAvatarBucket,

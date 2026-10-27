@@ -280,6 +280,7 @@ function HelpToggle({
 export function OptionsPane({
   motion,
   notice,
+  emailAvailable,
   helpOpen,
   helpShift,
   onToggleHelp,
@@ -291,6 +292,7 @@ export function OptionsPane({
 }: {
   motion: PaneMotion | null;
   notice?: ReactNode;
+  emailAvailable: boolean;
   helpOpen: boolean;
   /** How far the pane rises for the open help. */
   helpShift: SharedValue<number>;
@@ -320,7 +322,9 @@ export function OptionsPane({
       </PaneItem>
       <PaneItem index={2} motion={motion} className="mt-7 gap-3">
         <SignInButton brand icon={ScanLine} label={t("mobile.auth.scanQrCode")} onPress={onScan} reduced={reduced} />
-        <SignInButton brand={false} label={t("mobile.auth.signIn.emailButton")} onPress={onEmail} reduced={reduced} />
+        {emailAvailable ? (
+          <SignInButton brand={false} label={t("mobile.auth.signIn.emailButton")} onPress={onEmail} reduced={reduced} />
+        ) : null}
       </PaneItem>
       <PaneItem index={3} motion={motion}>
         <HelpToggle open={helpOpen} onToggle={onToggleHelp} onBodyLayout={onHelpLayout} reduced={reduced} />

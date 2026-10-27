@@ -8,6 +8,7 @@ import {
   bearerToken,
   requestAuthService,
   requestRemoteControlPlane,
+  requestSelfHostedInviteOrigin,
   requestTeamInviteEmailDelivery,
 } from "../../../server/request-auth";
 import { requestSourceIp } from "../../../server/source-ip";
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/v1/team-invitations/email")({
               user,
               body,
               requestSourceIp(request),
+              requestSelfHostedInviteOrigin(),
             );
             return new Response(null, { status: 204 });
           }),

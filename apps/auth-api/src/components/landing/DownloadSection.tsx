@@ -48,10 +48,10 @@ export function DownloadSection() {
     <section ref={sectionRef} id="download" class="landing-download" aria-labelledby="download-title">
       <div class="landing-download-inner">
         <header class="landing-download-heading" data-revealed={revealState()}>
-          <h2 id="download-title">Download OpenBot</h2>
+          <h2 id="download-title">Download OpenBotFR</h2>
           <p>
             Choose your platform. Run Codex, Claude, Gemini, Grok, OpenCode, Muse Code, Pi or your own model from one
-            desktop app, and talk to your agents from your phone.
+            desktop app. Mobile source is available for optional remote access.
           </p>
         </header>
 
@@ -118,7 +118,7 @@ export function DownloadSection() {
                   target="_blank"
                   rel={EXTERNAL_LINK_REL}
                   data-download-platform={platform}
-                  data-state="available"
+                  data-state="source-only"
                   data-revealed={revealState()}
                 >
                   <DownloadCardContent

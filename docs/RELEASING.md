@@ -1,5 +1,23 @@
 # Releasing OpenBot
 
+## OpenBotFR Windows-only fork release
+
+OpenBotFR currently publishes a Windows x64 installer and an unpacked ZIP from the fork at
+`daMustermann/openbotfr`. Its release tag has the format `openbotfr-v<version>`.
+The fork release does not run the upstream multi-platform tag workflow, publish a Docker
+image, deploy an account Worker, or publish a hosted-server snapshot. The Cloudflare
+production CI job is restricted to the upstream repository.
+
+For OpenBotFR, check the Windows installer and unpacked application with
+`bun run verify:package:win` after `bun run dist:win`; check hashes for both files; publish
+the Windows artifacts and `SHA256SUMS.txt` to GitHub Releases. Make the release notes
+clear about disabled desktop telemetry, optional self-hosting, remaining network paths,
+unsigned binaries, and checks that have not run. The initial release is documented in
+[OpenBotFR 0.51.1](releases/openbotfr-v0.51.1.md).
+
+The remainder of this guide is the **upstream OpenBot release procedure**. Its signing,
+cloud deployment, and auto-update steps do not apply to the Windows-only OpenBotFR release.
+
 For iOS builds uploaded to TestFlight through GitHub Actions, see
 [the mobile release guide](../apps/mobile/README.md#github-actions-testflight-release). For Android
 builds uploaded to Google Play, see
@@ -24,9 +42,10 @@ SHA-256 and version only.
 
 Installed apps do not wait for a release to get a new provider CLI: they offer the latest upstream
 release (see [Provider CLI updates](architecture/providers.md#provider-cli-updates)). The pinned version is the
-first-install fallback. To stop a broken upstream release, add its version to the provider's list in
-`provider-runtime-blocklist.json` and merge it to `main`. Apps read the list at their next check. A
-blocked version is no longer offered, but it stays on the computers that already installed it.
+first-install fallback. To block a broken upstream release in new OpenBotFR builds, add its version
+to `provider-runtime-blocklist.json`. Existing installations can receive a remote list if their
+operator sets `OPENBOTFR_RUNTIME_BLOCKLIST_URL` to an HTTPS endpoint. A blocked version is no
+longer offered, but it stays on the computers that already installed it.
 
 ## One-time GitHub setup
 

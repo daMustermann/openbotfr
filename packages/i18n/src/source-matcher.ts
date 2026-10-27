@@ -114,6 +114,7 @@ export function createSourceLocalizer(input: {
       translation: input.translation(locale),
       locale,
       sourceLocale: "en",
+      displayBrand: true,
     });
     translators.set(locale, translate);
     return translate;
@@ -140,7 +141,9 @@ export function createSourceLocalizer(input: {
 
   return {
     localize: (text, locale) => {
-      if (locale === "en" || !input.translation(locale)) return text;
+      // English and unloaded catalogs must also show the fork name for known messages.
+      // Unrecognized provider text and the released source message stay unchanged.
+      if (locale === "en" || !input.translation(locale)) return localize(text, "en", 0);
       const cacheKey = `${locale}\u0000${text}`;
       const cached = cache.get(cacheKey);
       if (cached !== undefined) {

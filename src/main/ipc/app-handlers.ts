@@ -68,14 +68,14 @@ import { stringPayload } from "./validation";
  * `mailto:` address, which `openUrl` refuses; the web client opens the same constant.
  */
 const EXTERNAL_DESTINATIONS: Record<ExternalDestination, string> = {
-  "agent-setup": "https://github.com/nightly-labs/openbot/blob/main/docs/TROUBLESHOOTING.md",
+  "agent-setup": "https://github.com/daMustermann/openbotfr/blob/main/docs/TROUBLESHOOTING.md",
   "opencode-install": "https://opencode.ai/docs/",
   "opencode-auth": "https://opencode.ai/auth",
   "claude-install": "https://code.claude.com/docs",
-  feedback: "https://x.com/intent/post?text=Feedback%20for%20OpenBot%20%40norbertbodziony%3A%20",
-  message: "https://x.com/norbertbodziony",
-  changelog: "https://openbot.run/changelog",
-  guides: "https://openbot.run/guides",
+  feedback: "https://github.com/daMustermann/openbotfr/issues/new",
+  message: "https://github.com/daMustermann/openbotfr/issues",
+  changelog: "https://github.com/daMustermann/openbotfr/releases",
+  guides: "https://github.com/daMustermann/openbotfr#readme",
   // A Redirect Rule in the openbot.run Cloudflare zone sends this to the current Discord invite.
   discord: "https://discord.openbot.run",
   x: "https://x.com/OpenBot_",

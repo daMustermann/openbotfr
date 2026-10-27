@@ -63,7 +63,7 @@ export function sourceTranslateFor(locale: TranslatedLocale): Translate<SourceMe
   if (cached) return cached;
   const translation = sourceTranslation(locale);
   if (!translation) return sourceTranslateFor("en");
-  const translate = createTranslate({ source: en, translation, locale, sourceLocale: "en" });
+  const translate = createTranslate({ source: en, translation, locale, sourceLocale: "en", displayBrand: true });
   sourceTranslators.set(locale, translate);
   return translate;
 }

@@ -44,17 +44,39 @@ export function isAgentTemplateShareOrigin(origin: string): boolean {
   }
 }
 
-/** The share origin for an Account Worker: the local Worker in development, `openbot.run` otherwise. */
+/** Return a recognized share origin. A private service must use an app link instead. */
 export function agentTemplateShareOrigin(apiOrigin: string): string {
-  return apiOrigin !== OPENBOT_AGENT_TEMPLATE_ORIGIN && isAgentTemplateShareOrigin(apiOrigin)
-    ? apiOrigin
-    : OPENBOT_AGENT_TEMPLATE_ORIGIN;
+  if (!isAgentTemplateShareOrigin(apiOrigin)) throw new Error("The OpenBot agent link origin is invalid.");
+  return apiOrigin;
 }
 
 export function createAgentTemplateShareUrl(id: string, origin: string = OPENBOT_AGENT_TEMPLATE_ORIGIN): string {
   assertAgentTemplateId(id);
   if (!isAgentTemplateShareOrigin(origin)) throw new Error("The OpenBot agent link origin is invalid.");
   return `${origin}${OPENBOT_AGENT_TEMPLATE_PATH_PREFIX}${id}`;
+}
+
+/**
+ * Rebuild a publication link from its id. Self-hosted account services share an app link,
+ * so publishing does not send people to the upstream website.
+ */
+export function normalizeAgentTemplateShareUrl(value: string, id: string): string {
+  assertAgentTemplateId(id);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("The OpenBot agent link is invalid.");
+  }
+  if (url.protocol === "openbot:") {
+    if (parseAgentTemplateUrl(value) !== id) throw new Error("The OpenBot agent link is invalid.");
+    return createOpenBotAgentTemplateUrl(id);
+  }
+  const origin = url.origin;
+  if (!isAgentTemplateShareOrigin(origin)) throw new Error("The OpenBot agent link origin is invalid.");
+  const canonical = createAgentTemplateShareUrl(id, origin);
+  if (value !== canonical) throw new Error("The OpenBot agent link is invalid.");
+  return canonical;
 }
 
 /**

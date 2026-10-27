@@ -1,12 +1,18 @@
-# OpenBot
+# OpenBotFR (OpenBot For Real)
 
-[![CI](https://github.com/nightly-labs/openbot/actions/workflows/ci.yml/badge.svg)](https://github.com/nightly-labs/openbot/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0.0-blue.svg)](LICENSE)
 
-OpenBot is a local-first desktop workspace for persistent AI teammates. It supports the local
+OpenBotFR is a local-first fork of OpenBot for persistent AI agents. Start the desktop app
+without a hosted OpenBot account. Your workspaces and conversations stay on your computer.
+
+**Windows x64 release:** [Download OpenBotFR 0.51.1](https://github.com/daMustermann/openbotfr/releases/tag/openbotfr-v0.51.1).
+The installer is unsigned. See the [privacy notes](PRIVACY.md) and
+[release details](docs/releases/openbotfr-v0.51.1.md) before installation.
+The fork supports the local
 [Codex App Server](https://learn.chatgpt.com/docs/app-server) and
 [Claude Code](https://code.claude.com/docs/en/overview), plus [Grok CLI](https://docs.x.ai/build/overview),
-OpenCode, Gemini, [Cursor CLI](https://cursor.com/cli), and [Cline CLI](https://cline.bot/cli) through ACP. It gives every agent its own workspace and
+OpenCode, Gemini, [Cursor CLI](https://cursor.com/cli), and [Cline CLI](https://cline.bot/cli)
+through ACP. A Kilo Code ACP preset is included. It gives every agent its own workspace and
 conversation, and provides local queues, file transfers, an embedded browser, and agent-to-agent
 messaging in one desktop app.
 
@@ -26,113 +32,66 @@ messaging in one desktop app.
 - Agent-to-agent messages, replies, reactions, images, and managed file transfers.
 - Shared desktop channel chats with one task owner, explicit delegation, shared history, and Stop, Resume, Reassign, Archive, and Restore controls.
 - A persistent embedded browser that agents can open, inspect, and control.
-- Optional Computer Use on macOS, Windows and Linux through the `cua-driver` binary in the release, which OpenBot starts as its own child process and gives to every provider.
+- Optional Computer Use where the matching `cua-driver` runtime is installed.
 - Per-agent model, reasoning, profile, notification, browser, and panel state.
-- Local data and privacy-safe diagnostics exports from the account menu.
-- Optional OpenBot accounts through one-time email codes. The account API runs on Cloudflare Workers and D1.
+- Local data and diagnostics exports. Check an export before you share it.
+- Local desktop use without a hosted account. Remote Team features still require a separate
+  account and Signal service. See [self-hosting](docs/self-hosting.md).
 
-OpenBot is local-first, not offline-only. Codex connects to OpenAI, Claude connects to Anthropic,
+OpenBotFR is local-first, but it is not offline-only. Codex connects to OpenAI, Claude connects to Anthropic,
 Grok connects to xAI, Gemini connects to Google, Cursor connects to Cursor, Cline connects to Cline,
 visited pages use the network, and installed plugins may connect to their own services.
 
 ## Install
 
-OpenBot supports macOS 13 or newer on Apple silicon or Intel, Windows 10 or newer on x64 systems, and x64
-or arm64 Linux as an AppImage.
+Download the [Windows x64 NSIS installer](https://github.com/daMustermann/openbotfr/releases/download/openbotfr-v0.51.1/OpenBotFR-0.51.1-x64.exe)
+or the [unpacked Windows ZIP](https://github.com/daMustermann/openbotfr/releases/download/openbotfr-v0.51.1/OpenBotFR-0.51.1-win-x64-unpacked.zip).
+Use [SHA256SUMS.txt](https://github.com/daMustermann/openbotfr/releases/download/openbotfr-v0.51.1/SHA256SUMS.txt)
+to check the download. These binaries are unsigned and may display a Windows SmartScreen warning.
+An upgrade from a previous OpenBot installer has not yet been tested on a real installed profile.
+This fork currently publishes Windows x64 binaries only.
 
-### macOS
+The upstream OpenBot downloads, Nix flake, Docker image, and signing statements do not describe this fork.
 
-1. Download the latest `OpenBot-*-arm64.dmg` (or `OpenBot-*-x64.dmg` on an Intel Mac) from [GitHub Releases](https://github.com/nightly-labs/openbot/releases).
-2. Drag OpenBot to Applications and open it.
+Build a local installer from this checkout on the target operating system. Install
+[Bun](https://bun.sh), Node.js 24, and the required platform build tools first:
 
-### Windows
-
-1. Download the latest `OpenBot-*-x64.exe` from [GitHub Releases](https://github.com/nightly-labs/openbot/releases).
-2. Run the installer and open OpenBot.
-
-### Linux
-
-1. Download the latest `OpenBot-*-x86_64.AppImage` (or `OpenBot-*-arm64.AppImage` on arm64) from [GitHub Releases](https://github.com/nightly-labs/openbot/releases).
-2. Make it executable with `chmod +x OpenBot-*.AppImage`, then run it.
-
-The AppImage does not need libfuse2, so it also runs on Arch Linux and Omarchy. It mounts itself
-with `fusermount3` from the `fuse3` package.
-
-On Ubuntu 23.10 or newer and on Debian 13, unprivileged user namespaces are restricted by AppArmor
-and OpenBot exits during launch until you install an AppArmor profile:
-
-```bash
-sudo install -m 0644 build/linux/openbot.apparmor /etc/apparmor.d/openbot
-sudo systemctl reload apparmor
+```sh
+bun install --frozen-lockfile
 ```
 
-The same file ships inside the AppImage at `resources/linux/openbot.apparmor`. Edit the attachment
-path in the profile if you keep the AppImage outside the usual locations. Do not start OpenBot with
-`--no-sandbox`: that removes the boundary between a renderer and the rest of the computer.
+Then run one platform command:
 
-On the first start from an AppImage, OpenBot writes `~/.local/share/applications/openbot.desktop`
-and `~/.local/share/icons/openbot.png`, which is what lets an `openbot://` link - an invitation, or
-a plugin listing - open the app and gives the launcher an icon that stays after the app exits. Delete the two files to undo it.
+| Target | Command | Local output |
+| --- | --- | --- |
+| Windows x64 | `bun run dist:win` | NSIS installer in `dist/` |
+| macOS | `bun run dist:mac` | Unsigned DMG in `dist/` |
+| Linux x64 | `bun run dist:linux` | AppImage in `dist/` |
+| Linux arm64 | `bun run dist:linux:arm64` | AppImage in `dist/` |
 
-Remote desktop works on Linux x64 in an X11 session,
-such as Xorg or Xvfb. It does not work under Wayland, and the arm64 AppImage does not include it.
+These are source build commands for the supported project targets. Only the Windows x64
+installer and unpacked ZIP have been packaged and checked for this fork release.
+Build commands prepare external native
+runtimes and can need a network connection. The build configuration names the product
+`OpenBotFR`. Local packages are not signed or notarized by this fork. Do not disable
+Electron sandboxing to fix a Linux launch problem.
 
-For Gemini sign-in, install a desktop browser and `xdg-utils`. Open the sign-in page in a
-desktop session on the same host or VM. Google sends the callback to that host through
-`127.0.0.1`; a server with no desktop cannot complete this sign-in. See
-[Gemini setup](docs/architecture/providers.md#gemini).
+Installed OpenBotFR builds keep the existing `OpenBot` profile directory under the
+operating system's application data directory. This keeps local workspaces,
+settings, and encrypted data available after an upgrade from OpenBot. An explicit
+`--user-data-dir` override still selects its own profile.
 
-#### Linux server with no screen
-
-To run OpenBot as an always-on server of your account on a VPS or home server (Ubuntu 24.04 or
-26.04 with systemd), install it from a terminal and sign in with an email code:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/nightly-labs/openbot/main/scripts/install-server.sh | sudo bash
-sudo openbot login
-```
-
-Then use it from the desktop app, the iPhone app or `openbot.run/app`. See
-[self-hosted servers](docs/self-hosted-server.md) for the options and the `openbot` commands.
-
-#### Docker
-
-The same server runs as a container (`linux/amd64` and `linux/arm64`). The seccomp profile lets the
-Electron sandbox stay on:
-
-```bash
-curl -fsSLO https://raw.githubusercontent.com/nightly-labs/openbot/main/docker/seccomp.json
-docker run -d --name openbot --restart unless-stopped \
-  --security-opt seccomp=seccomp.json --security-opt no-new-privileges:true \
-  --shm-size 1g --stop-timeout 60 -v openbot-data:/data \
-  ghcr.io/nightly-labs/openbot:latest
-docker exec -it openbot openbot login
-```
-
-See [Docker](docs/docker.md) for Compose, the data volume, upgrades and the security limits. For Amazon ECS,
-see [AWS ECS](docs/aws-ecs.md).
-
-### Nix
-
-The flake installs the desktop app from the latest release on x64 or arm64 Linux and on Apple silicon:
-
-```bash
-nix run github:nightly-labs/openbot
-nix profile install github:nightly-labs/openbot
-```
-
-`overlays.default` adds `pkgs.openbot`. OpenBot is not free software, so your nixpkgs must allow it,
-for example with `nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "openbot";`.
-Nix installs OpenBot updates. OpenBot does not update itself from the Nix store. On Linux, the Nix
-package does not include the remote desktop runtime, because nixpkgs does not have a library that it
-needs.
-
-> [!IMPORTANT]
-> Windows releases are signed by `SYNTHETIFY LABS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ`. Older
-> releases are not code-signed. SmartScreen can still warn about a new release. Check the release
-> checksum or GitHub build attestation before you run the installer.
+To run the source in a development profile, use `bun run dev`. It starts local
+development services as well as the desktop app. A production desktop build uses
+`http://127.0.0.1:3100` as the fallback account API address; it does not need that
+service for local agent work. Remote access needs a running service and is optional.
+See [Self-hosting](docs/self-hosting.md) and [Privacy](PRIVACY.md) for current limits.
 
 ### Agent setup
+
+For Kilo Code, install its CLI so that `kilo` is on your system `PATH`.
+The ACP preset runs `kilo acp`. This is a configured preset; its full
+connection flow has not been verified in this fork.
 
 OpenBot can download a supported provider runtime when you select `Download` in onboarding,
 Settings, agent setup, or the model picker. OpenBot prefers its managed CLI. Explicit `OPENBOT_*_PATH` overrides take precedence; a compatible
@@ -312,6 +271,12 @@ The import adds each agent's name, instructions, avatar, skills, routines, and m
 
 ## Commands
 
+Some development commands below still operate the upstream hosted account,
+billing, website, and release infrastructure. They are retained in the source
+for migration work. They are not part of the account-free local install flow.
+Do not deploy these services as telemetry-free without the checks in
+[Privacy](PRIVACY.md) and [Self-hosting](docs/self-hosting.md).
+
 The browser client is served at `/app` by the public web app. For local development, run
 `bun run dev:api` and open `/app` on the API URL printed by the supervisor. Use
 `bun run dev` when a desktop host is also needed.
@@ -406,18 +371,20 @@ See [web client delivery](docs/web-client.md) for the release gate and focused c
 | `bun run test:provider-detection` | Run local detection, Load models and endpoint Edit against fake OpenAI-compatible servers on this computer: no key in a scan, no redirect, the stored key only to its own origin. Offline; writes `.openbot-build/provider-detection-e2e/report.json`. |
 | `bun run test:storage-live` | **Online/manual:** verify isolated Codex and Claude turns in a temporary SQLite database. |
 
-Publishing never creates a second OpenBot instance. The host keeps its Team API on loopback. A hidden,
+Remote host publishing uses the legacy Team API stack and its account service.
+It does not create a second OpenBot instance. The host keeps its Team API on loopback. A hidden,
 sandboxed Electron page connects it to invited clients through WebRTC. Signal carries only connection
 setup messages. Team data uses direct DataChannels when possible and the project coturn service when
-direct ICE fails. Cloudflare stores accounts, configuration, memberships, invitations, logical session
+direct ICE fails. The selected account service stores accounts, configuration, memberships, invitations, logical session
 records, and public assets. It does not carry chats, files, commands, or remote desktop media.
 
 The development runner advertises both Mobile Connect and its Signal service on the preferred private
 LAN interface. Restart the runner after changing networks so newly generated QR codes contain the
 current address.
 
-Production mobile analytics setup and required OpenPanel credentials are documented in
-[OpenBot Mobile](apps/mobile/README.md#openpanel-product-analytics).
+The mobile product analytics client and failure-report queue are disabled in
+this fork. The account Worker still has analytics send paths.
+See [Privacy](PRIVACY.md) for the remaining limits.
 
 `mobile:go:tunnel` exposes only the Expo development server. It does not expose the local account
 API, Signal, or TURN. A phone on 5G cannot use the default LAN addresses. For a test across networks,
@@ -493,6 +460,7 @@ Electron main
     ↕ typed preload bridge
 SolidJS renderer
 
+Optional upstream remote stack:
 Cloudflare Workers
 └── TanStack Start + Solid 2 account API
     ├── D1 accounts, email challenges, hashed sessions, and team tunnels
@@ -503,8 +471,10 @@ Cloudflare Workers
 - `src/backend` owns provider adapters, persistence, message scheduling, transfers, and the browser host.
 - `src/preload` exposes only the typed `window.openbot` API.
 - `src/renderer` contains the SolidJS interface.
-- `apps/auth-api` contains the TanStack Start account API, one-time email codes, rate limits, and D1 migrations. It also serves the public site: the landing page, `/news`, `/guides`, and the plugin pages at `/plugins` and `/plugins/<slug>`.
-- `apps/status` contains the public status page at `status.openbot.run`, the script that the `status-page` workflow runs to check the services, and the script that sends the [status webhooks](docs/status-webhooks.md) of the team. GitHub hosts it, so it stays up when Cloudflare does not.
+- `apps/auth-api` still contains the upstream Cloudflare account Worker and public site.
+  It is optional for remote access and is not needed for a local desktop session.
+  It still has billing and analytics code.
+- `apps/status` contains upstream public status page code. It is not an OpenBotFR service.
 - `packages/contracts` contains process-boundary contracts, shared limits, and pure validation.
 - `packages/i18n` contains the interface text in English, French, Japanese, Brazilian Portuguese and Turkish for desktop, web and mobile. See [docs/i18n.md](docs/i18n.md) to add text or a language.
 
@@ -565,8 +535,9 @@ The Electron renderer is never exposed as a public website. It communicates with
 over stdio. When the owner publishes OpenBot, its authenticated Team API stays on localhost. WebRTC
 protocol v3 carries RPC, events, and binary files to desktop and mobile clients. Expo Go hosts the
 mobile `RTCPeerConnection` in a hidden Expo DOM component, so mobile uses the same encrypted transport
-without a custom native development build. The account flow connects to
-the configured HTTPS Cloudflare API. The client stores only an encrypted OpenBot session token. One-time codes expire after
+without a custom native development build. Remote account requests use the
+configured account API. The current desktop fallback points to local loopback.
+A remote client stores an encrypted session token. One-time codes expire after
 10 minutes and are stored only as hashes. A daily maintenance task removes expired or consumed
 authentication records from D1. The embedded browser uses a separate sandboxed Electron session and
 cannot access `window.openbot` or managed local attachments.
@@ -588,14 +559,12 @@ described above.
 
 ## Releases
 
-Releases are tag-driven. `bun run release:patch`, `release:minor`, or `release:major` prepares the
-version and changelog. After review, commit, preflight, and tag the release; pushing the tag builds a
-signed and notarized macOS ARM64 and x64 release, a signed Windows x64 release, and unsigned Linux x64
-and arm64 AppImages in GitHub Actions. After the release is published, the workflow pushes the Docker
-image to `ghcr.io/nightly-labs/openbot`.
-Installed builds check GitHub Releases for updates and expose download/restart controls in the account
-popover. Release signing secrets and the complete procedure are documented in
-[docs/RELEASING.md](docs/RELEASING.md).
+Build packages locally with the commands under [Install](#install). The existing
+GitHub release workflow and [release guide](docs/RELEASING.md) still target the
+upstream infrastructure. They do not prove that OpenBotFR has published a release.
+The remote host release check is disabled by default. Setting
+`OPENBOTFR_USE_UPSTREAM_RELEASES=1` enables an upstream compatibility check;
+the upstream feed does not supply OpenBotFR updates.
 
 ## Contributing
 
@@ -621,11 +590,11 @@ respective products and services.
 
 ### Shared macOS hosts
 
-For one native Standard user per tenant, install the normal OpenBot DMG and the optional
-`OpenBot-Host-<VERSION>-arm64.pkg` from the same release. The Host package provides
+The following commands describe legacy upstream host packages. No OpenBotFR
+host package is confirmed. The upstream `OpenBot-Host-<VERSION>-arm64.pkg` provides
 `sudo openbot-host setup --create-user client-acme --create-user client-bravo` and
 `sudo openbot-host verify`. `sudo openbot-host status [--json]` and `sudo openbot-host watch`
 show the update phase, the staged version, and each tenant's work state. No Git checkout, Bun,
 or compilation is required on the host.
-Normal desktop users need only the DMG. See the [host deployment guide](docs/multi-tenant-hosting.md)
-for existing-user enrollment, password handling, package upgrades, and required target-host checks.
+For existing-user enrollment, password handling, package upgrades, and required
+target-host checks in the legacy setup, see the [host deployment guide](docs/multi-tenant-hosting.md).

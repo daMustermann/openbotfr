@@ -68,7 +68,6 @@ export const navItems: ReadonlyArray<SettingsNavItem> = [
       { titleKey: "settings.keepAwake.title", descriptionKey: "settings.keepAwake.description" },
       { titleKey: "settings.keepAwakeOnBattery.title", descriptionKey: "settings.keepAwakeOnBattery.description" },
       { titleKey: "settings.restoreWorkspace.title", descriptionKey: "settings.restoreWorkspace.description" },
-      { titleKey: "settings.analytics.title", descriptionKey: "settings.analytics.description" },
     ],
   },
   {
@@ -202,7 +201,7 @@ export function navItem(tab: SettingsTab): SettingsNavItem {
  * from this panel.
  */
 export function settingsTabShown(tab: SettingsTab, dynamicIslandShown: boolean): boolean {
-  if (tab === "hosted-servers") return false;
+  if (tab === "hosted-servers" || tab === "billing") return false;
   return tab !== "dynamic-island" || dynamicIslandShown;
 }
 

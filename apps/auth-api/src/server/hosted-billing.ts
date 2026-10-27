@@ -40,15 +40,14 @@ export function createHostedBilling(
     schedule: options.schedule,
   });
   const secretKey = bindings.STRIPE_SECRET_KEY?.trim();
-  const sales =
-    bindings.OPENPANEL_CLIENT_ID?.trim() && bindings.OPENPANEL_CLIENT_SECRET?.trim()
-      ? new BillingSales({
-          database: bindings.DB,
-          clientId: bindings.OPENPANEL_CLIENT_ID,
-          clientSecret: bindings.OPENPANEL_CLIENT_SECRET,
-          fetch: (input, init) => fetch(input, init),
-        })
-      : undefined;
+  const sales = secretKey
+    ? new BillingSales({
+        database: bindings.DB,
+        clientId: bindings.OPENPANEL_CLIENT_ID,
+        clientSecret: bindings.OPENPANEL_CLIENT_SECRET,
+        fetch: (input, init) => fetch(input, init),
+      })
+    : undefined;
   const billing = secretKey
     ? new BillingService({
         database: bindings.DB,

@@ -1,5 +1,6 @@
 import { APP_INTERFACE_SIZES, type AppInterfaceSize, type AppVariant } from "@openbot/contracts/ipc";
 import {
+  Button,
   Item,
   ItemActions,
   ItemContent,
@@ -31,6 +32,8 @@ const interfaceSizeOptions = [...APP_INTERFACE_SIZES];
 
 interface SettingsGeneralTabProps {
   value: GeneralSettingsValue;
+  accountEmail?: string | null;
+  onConnectAccount?: () => void;
   /** The device with the keyboard, naming ⌘ or Ctrl in the shortcut option. */
   platform?: "darwin" | "win32" | "linux" | undefined;
   /** A dev or preview build keeps its own logo color, so the logo color row says so. */
@@ -51,6 +54,23 @@ export function SettingsGeneralTab(props: SettingsGeneralTabProps) {
     value === undefined ? "" : format.percent(value / 100);
   return (
     <>
+      <SettingsSection title={i18n.t("settings.account.title")}>
+        <ItemGroup class="settings-modal-card">
+          <Item data-settings-row="settings.account.title" class="settings-modal-row">
+            <ItemContent>
+              <ItemTitle>{i18n.t("settings.account.title")}</ItemTitle>
+              <ItemDescription>{props.accountEmail ?? i18n.t("settings.account.description")}</ItemDescription>
+            </ItemContent>
+            <Show when={!props.accountEmail && props.onConnectAccount}>
+              <ItemActions>
+                <Button type="button" size="sm" variant="outline" onClick={() => props.onConnectAccount?.()}>
+                  {i18n.t("settings.account.connect")}
+                </Button>
+              </ItemActions>
+            </Show>
+          </Item>
+        </ItemGroup>
+      </SettingsSection>
       <SettingsSection title={i18n.t("settings.appearance.title")}>
         <ItemGroup class="settings-modal-card">
           <Item data-settings-row="settings.appearance.theme.title" class="settings-modal-row">
@@ -210,18 +230,6 @@ export function SettingsGeneralTab(props: SettingsGeneralTabProps) {
             onChange={(checked) => props.onUpdateSetting("restoreLastWorkspace", checked)}
             label={i18n.t("settings.restoreWorkspace.title")}
             description={i18n.t("settings.restoreWorkspace.description")}
-          />
-        </ItemGroup>
-      </SettingsSection>
-
-      <SettingsSection title={i18n.t("settings.permissions.title")}>
-        <ItemGroup class="settings-modal-card">
-          <SwitchField
-            data-settings-row="settings.analytics.title"
-            checked={props.value.productAnalytics}
-            onChange={(checked) => props.onUpdateSetting("productAnalytics", checked)}
-            label={i18n.t("settings.analytics.title")}
-            description={i18n.t("settings.analytics.description")}
           />
         </ItemGroup>
       </SettingsSection>

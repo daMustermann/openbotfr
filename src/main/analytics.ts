@@ -35,7 +35,6 @@ import { type AnalyticsOperationFailure, analyticsIO, analyticsSync } from "./an
 import { PROVIDER_AUTH_KINDS, type ProviderAuthKind } from "./analytics-provider-auth";
 import { localDay, RESOURCE_ENUMS, RESOURCE_PROPERTY_NAMES, type ResourceProperties } from "./resource-summary";
 
-const OPENPANEL_API_URL = "https://analytics.openbot.run/api";
 const OPENPANEL_CLIENT_ID = "6c989975-87ef-4f0c-857e-ab449a65b5c2";
 // Node fetch sends no Origin, and OpenPanel answers 401 to a client with no allowed origin or
 // secret. The SDK drops a 401 in silence. Send the renderer's origin, which the project allows.
@@ -139,10 +138,21 @@ function createOpenPanelClient(options: OpenPanelOptions): HostOpenPanelClient {
   return client;
 }
 
+/** Only a local test receiver can accept analytics events. */
+function isLocalCaptureUrl(value: string | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost");
+  } catch {
+    return false;
+  }
+}
+
 export interface HostAnalyticsOptions {
   reports?: ReportQueue;
   enabled: boolean;
-  /** The OpenPanel API. Production when omitted; a dev capture server in `analytics-redaction-e2e`. */
+  /** Optional loopback test receiver for `analytics-redaction-e2e`. */
   apiUrl?: string;
   trackingEnabled?: boolean;
   appVersion: string;
@@ -338,12 +348,12 @@ export class HostAnalytics {
     this.#inventoryDayStore = options.inventoryDay;
     this.#resources = options.resources;
     this.#trackingEnabled = options.trackingEnabled ?? true;
-    if (!options.enabled) {
+    if (!options.enabled || !isLocalCaptureUrl(options.apiUrl)) {
       this.#client = null;
       return;
     }
     try {
-      const client = createClient({ apiUrl: options.apiUrl ?? OPENPANEL_API_URL, clientId: OPENPANEL_CLIENT_ID });
+      const client = createClient({ apiUrl: options.apiUrl, clientId: OPENPANEL_CLIENT_ID });
       client.setGlobalProperties({
         surface: "desktop_host",
         environment: "production",

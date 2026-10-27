@@ -2,6 +2,7 @@ import { MANAGED_RUNTIME_PROVIDERS, type ManagedProviderId } from "@openbot/cont
 import { type DynamicRecord, isDynamicRecord, isNumber, isString } from "@openbot/contracts/runtime-values";
 import { sourceText } from "@openbot/i18n/source";
 import { Effect } from "effect";
+import bundledBlockedVersions from "../../provider-runtime-blocklist.json";
 import type { AgentRuntimeLock } from "../../scripts/agent-runtime-lock";
 import {
   codexTag,
@@ -35,15 +36,12 @@ export interface LatestReleaseContext {
 }
 
 /**
- * Versions the OpenBot repository asks every installation not to offer.
+ * Versions this OpenBotFR build asks an installation not to offer.
  *
- * This is the one way to stop a broken upstream release without shipping an OpenBot release. It is a
- * block list, not an allow list: a new release is offered at once, and only a version named here is
- * held back. A list that cannot be read blocks nothing.
+ * The bundled list never contacts the upstream OpenBot repository. An operator can set
+ * OPENBOTFR_RUNTIME_BLOCKLIST_URL to an HTTPS endpoint to receive blocklist updates without
+ * installing a new build. A list that cannot be read blocks nothing.
  */
-const BLOCKED_VERSIONS_URL =
-  "https://raw.githubusercontent.com/nightly-labs/openbot/main/provider-runtime-blocklist.json";
-
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_METADATA_BYTES = 4 * 1024 * 1024;
 const VERSION = /^\d+\.\d+\.\d+$/u;
@@ -346,7 +344,12 @@ export function latestRelease(
 export const fetchBlockedVersions = Effect.fn("ProviderRelease.fetchBlockedVersions")(function* (
   fetch: Fetch,
 ): Effect.fn.Return<BlockedVersions, ProviderRuntimeFailure> {
-  const value = yield* fetchJsonEffect(fetch, BLOCKED_VERSIONS_URL);
+  const configuredUrl = process.env.OPENBOTFR_RUNTIME_BLOCKLIST_URL?.trim();
+  const url = configuredUrl && URL.canParse(configuredUrl) ? new URL(configuredUrl) : null;
+  if (configuredUrl && (url?.protocol !== "https:" || url.username || url.password)) {
+    return yield* new ProviderRuntimeFailure({ cause: new Error(sourceText("error.provider.blockedListShape")) });
+  }
+  const value = url ? yield* fetchJsonEffect(fetch, url.toString()) : bundledBlockedVersions;
   if (!(value.schemaVersion === 1 && isDynamicRecord(value.blocked))) {
     return yield* new ProviderRuntimeFailure({ cause: new Error(sourceText("error.provider.blockedListShape")) });
   }

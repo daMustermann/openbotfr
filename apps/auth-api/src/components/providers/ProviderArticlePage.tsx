@@ -22,7 +22,7 @@ export interface ProviderArticlePageProps {
   page: ProviderPage;
 }
 
-// What OpenBot does with one provider: how to set it up, what OpenBot adds, the
+// What OpenBotFR does with one provider: how to set it up, what OpenBotFR adds, the
 // provider's own apps for a fair picture, and the other plans an agent can use.
 export function ProviderArticlePage(props: ProviderArticlePageProps) {
   const isThisProvider = (plan: OpenBotPlan) => plan.provider === props.page.provider;
@@ -68,7 +68,7 @@ export function ProviderArticlePage(props: ProviderArticlePageProps) {
       <RevealSection class="provider-setup" titleId="provider-setup-title" title="How to set it up">
         <ol class="provider-steps">
           <li class="provider-step">
-            <h3 class="provider-step-title">Download OpenBot</h3>
+            <h3 class="provider-step-title">Download OpenBotFR</h3>
             <p class="provider-step-text">
               For macOS 13 or later on Apple silicon or Intel, Windows 10 or later on x64, or x64 or arm64 Linux.
             </p>
@@ -92,14 +92,14 @@ export function ProviderArticlePage(props: ProviderArticlePageProps) {
           <li class="provider-step">
             <h3 class="provider-step-title">Give your agent a job</h3>
             <p class="provider-step-text">
-              Create an agent on {props.page.name}, choose its model, and give it a task. OpenBot makes a workspace
+              Create an agent on {props.page.name}, choose its model, and give it a task. OpenBotFR makes a workspace
               folder for it. When the work grows, add agents on other providers to the same channel.
             </p>
           </li>
         </ol>
       </RevealSection>
 
-      <RevealSection class="provider-adds" titleId="provider-adds-title" title="What OpenBot adds">
+      <RevealSection class="provider-adds" titleId="provider-adds-title" title="What OpenBotFR adds">
         <ul class="provider-adds-grid">
           <For each={adds()}>
             {(add, index) => (
@@ -115,7 +115,7 @@ export function ProviderArticlePage(props: ProviderArticlePageProps) {
 
       <RevealSection class="provider-official" titleId="provider-official-title" title="Official apps">
         <p class="compare-plans-lead">
-          The apps from {props.page.vendor}, and where they run. OpenBot runs the same agent, so you can use both.
+          The apps from {props.page.vendor}, and where they run. OpenBotFR runs the same agent, so you can use both.
         </p>
         <div class="compare-table-frame">
           <table class="compare-table provider-table">

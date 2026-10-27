@@ -1,6 +1,6 @@
-// Runs the real central auth manager against a local account server. The first startup request
-// blocks the event loop for longer than the startup window, as a slow database check does at start
-// (#2228). Sign-in must retry after the block, not fail because its timers fired late.
+// Runs the real central auth manager against a local account server. A saved account's first
+// startup request blocks the event loop longer than the startup window (#2228). Session recovery
+// must retry after the block, not fail because its timers fired late.
 //
 // Run: bun scripts/central-auth-startup-stall-e2e.ts
 // It writes .openbot-build/central-auth-startup-stall-e2e/report.json and exits non-zero on a failure.
@@ -17,13 +17,14 @@ const OUT = join(ROOT, ".openbot-build", "central-auth-startup-stall-e2e");
 const STARTUP_WINDOW_MS = 1_000;
 const REQUEST_TIMEOUT_MS = 300;
 const BLOCK_MS = 2_000;
+const SESSION_TOKEN = "s".repeat(48);
 
 const requests: string[] = [];
 const server = createServer((request, response) => {
   requests.push(request.url ?? "");
   const answer = () => {
     response.writeHead(200, { "Content-Type": "application/json" });
-    response.end(JSON.stringify({ status: "ok" }));
+    response.end(JSON.stringify({ id: "user-1", email: "a@example.com", name: null, avatarUrl: null }));
   };
   if (requests.length > 1) return answer();
   // Block the event loop past the request timeout and the startup window, then answer after the
@@ -40,7 +41,26 @@ const root = await mkdtemp(join(tmpdir(), "openbot-central-auth-stall-"));
 let passed = false;
 let error: string | undefined;
 let status: string | undefined;
+let anonymousStatus: string | undefined;
 try {
+  const unsigned = new CentralAuthManager({
+    apiUrl: `http://127.0.0.1:${address.port}`,
+    storagePath: join(root, "session.bin"),
+    encrypt: (value) => Buffer.from(value),
+    decrypt: (value) => value.toString(),
+    fetch: async () => {
+      throw new Error("Signed-out startup must not contact the account service.");
+    },
+  });
+  anonymousStatus = (await runCauseEffect(unsigned.initialize())).status;
+  await runCauseEffect(unsigned.dispose());
+  assert.equal(anonymousStatus, "signed_out");
+  assert.equal(requests.length, 0, "signed-out startup must not send a request");
+
+  await writeFile(
+    join(root, "session.bin"),
+    Buffer.from(JSON.stringify({ version: 2, sessionToken: SESSION_TOKEN })).toString("base64"),
+  );
   const auth = new CentralAuthManager({
     apiUrl: `http://127.0.0.1:${address.port}`,
     storagePath: join(root, "session.bin"),
@@ -52,9 +72,9 @@ try {
   });
   status = (await runCauseEffect(auth.initialize())).status;
   await runCauseEffect(auth.dispose());
-  assert.equal(status, "signed_out");
+  assert.equal(status, "signed_in");
   assert.ok(requests.length >= 2, `expected a retry after the block, saw ${requests.length} request(s)`);
-  assert.ok(requests.every((url) => url === "/health/live"));
+  assert.ok(requests.every((url) => url === "/v1/me"));
   passed = true;
 } catch (cause) {
   error = cause instanceof Error ? cause.message : String(cause);
@@ -62,7 +82,10 @@ try {
   server.close();
   await rm(root, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
-  await writeFile(join(OUT, "report.json"), `${JSON.stringify({ passed, status, requests, error }, null, 2)}\n`);
+  await writeFile(
+    join(OUT, "report.json"),
+    `${JSON.stringify({ passed, anonymousStatus, status, requests, error }, null, 2)}\n`,
+  );
   process.stdout.write(
     `${passed ? "PASS" : "FAIL"}${error ? `: ${error}` : ""}: report in ${join(OUT, "report.json")}\n`,
   );

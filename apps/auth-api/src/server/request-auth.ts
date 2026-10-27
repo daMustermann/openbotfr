@@ -1,5 +1,6 @@
 import { env, waitUntil } from "cloudflare:workers";
 import { HOSTING_DEVELOPER_KEY_HEADER } from "@openbot/contracts/hosted-servers";
+import { selfHostedApiOrigin } from "@openbot/contracts/invite-links";
 import { isDynamicRecord, isString } from "@openbot/contracts/runtime-values";
 import { Effect } from "effect";
 import { type AccountAnalytics, createAccountAnalytics } from "./account-analytics";
@@ -296,6 +297,19 @@ export function requestContactMessageServices(): ContactMessageServices {
 export function requestTeamInviteEmailDelivery(): TeamInviteEmailDelivery | null {
   const bindings = requireWorkerBindings(env);
   return createTeamInviteEmailDelivery(bindings);
+}
+
+/** Never derive this origin from the inbound URL or its Host header. */
+export function requestSelfHostedInviteOrigin(): string | undefined {
+  const configured = requireWorkerBindings(env).SELF_HOSTED_PUBLIC_ORIGIN?.trim();
+  if (!configured) return undefined;
+  try {
+    const url = new URL(configured);
+    if (url.username || url.password || url.pathname !== "/" || url.search || url.hash) return undefined;
+    return selfHostedApiOrigin(configured);
+  } catch {
+    return undefined;
+  }
 }
 
 export function requestRemoteControlPlane(): RemoteControlPlane {

@@ -21,11 +21,8 @@ export function useServerActions() {
     setServerMuted,
     setServerNotificationLevel,
     setJoinServerOpen,
-    setAddServerOpen,
-    hostedServersAvailable,
     hostedServerIds,
     hostedServersLoaded,
-    refreshHostedServersAvailable,
   } = useServers();
   const { selectServer } = useServerSelection();
   const { openServerSettings, requestLeaveServer, requestRestartServer } = useServerSettings();
@@ -52,16 +49,10 @@ export function useServerActions() {
     void selectServer(serverId).catch(selectFailed);
   }
 
-  /**
-   * Opens the hosted server plans when the account can create a hosted server, otherwise the invite
-   * dialog. It uses the last answer, so the click does not wait for the network; the read after it is
-   * for the next click.
-   */
+  /** Join a remote server with an invite. Hosted server purchase is not part of OpenBotFR. */
   function add(): void {
     if (platform.landingPreview) return;
-    if (hostedServersAvailable()) setAddServerOpen(true, "server_rail");
-    else setJoinServerOpen(true);
-    void refreshHostedServersAvailable();
+    setJoinServerOpen(true);
   }
 
   const callbacks = {
@@ -78,5 +69,5 @@ export function useServerActions() {
     canRestart: (serverId) => hostedServerIds().has(serverId),
   } satisfies ServerActionCallbacks;
 
-  return { orderedServers, select, add, addCreatesServer: hostedServersAvailable, callbacks };
+  return { orderedServers, select, add, addCreatesServer: () => false, callbacks };
 }

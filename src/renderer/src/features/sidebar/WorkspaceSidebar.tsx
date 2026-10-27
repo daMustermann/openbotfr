@@ -2,7 +2,6 @@ import type { ChatWindowTarget } from "@openbot/contracts/ipc";
 import { AGENT_HIDDEN_CAPABILITY } from "@openbot/contracts/team-protocol/current";
 import { computeAgentAvatarMoods } from "@openbot/ui/features/agents/agent-avatar-mood";
 import { Sidebar } from "@openbot/ui/features/sidebar/Sidebar";
-import { SidebarCommunityCard } from "@openbot/ui/features/sidebar/SidebarCommunityCard";
 import { SidebarMobileAppCard } from "@openbot/ui/features/sidebar/SidebarMobileAppCard";
 import { SidebarStorageCard } from "@openbot/ui/features/sidebar/SidebarStorageCard";
 import { computeSidebarAgentStates, sidebarChannelWaits } from "@openbot/ui/features/sidebar/sidebar-agent-states";
@@ -33,7 +32,6 @@ import { useServers } from "../servers/servers-context";
 import { useSettings } from "../settings/settings-context";
 import { usePresence } from "../team/team-context";
 import { SidebarUpdateIsland } from "../updates/SidebarUpdateIsland";
-import { createCommunityCardVisibility } from "./community-card";
 import { useSidebar } from "./sidebar-context";
 import { createStorageCard } from "./storage-card";
 
@@ -131,7 +129,6 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
   const [mobileAppDismissed, setMobileAppDismissed] = createSignal(
     window.localStorage.getItem(MOBILE_APP_DISMISSED_STORAGE_KEY) === "true",
   );
-  const communityCard = createCommunityCardVisibility();
   const storageCard = createStorageCard(activeServer);
   // A clear in Server settings frees space, so the card reads the disk again when settings close.
   createEffect(serverSettingsOpen, (open, wasOpen) => {
@@ -319,15 +316,6 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
                 window.localStorage.setItem(MOBILE_APP_DISMISSED_STORAGE_KEY, "true");
                 setMobileAppDismissed(true);
               }}
-            />
-          </Show>
-          <Show
-            when={!platform.landingPreview && !storageCard.card() && mobileAppDismissed() && !communityCard.dismissed()}
-          >
-            <SidebarCommunityCard
-              onJoinDiscord={() => void appPort().openExternal("discord")}
-              onFollowX={() => void appPort().openExternal("x")}
-              onDismiss={communityCard.dismiss}
             />
           </Show>
           <SidebarUpdateIsland />

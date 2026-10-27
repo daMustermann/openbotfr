@@ -26,10 +26,6 @@ export function FaqSection() {
           <header class="landing-section-heading landing-faq-heading">
             <h2 id="faq-title">Questions</h2>
             <p>Short answers about price, setup, providers and your data.</p>
-            <Link class="landing-faq-contact" to="/contact">
-              Ask us something else
-              <LandingIcon name="arrow-right" class="landing-faq-contact-icon" />
-            </Link>
           </header>
           <div class="landing-faq-body">
             <div class="compare-faq-list">
@@ -60,7 +56,7 @@ export function FaqSection() {
           </div>
         </div>
         <nav class="landing-compare-links" aria-labelledby="landing-compare-title">
-          <h3 id="landing-compare-title">Compare OpenBot</h3>
+          <h3 id="landing-compare-title">Compare OpenBotFR</h3>
           <ul>
             <For each={LANDING_COMPARISON_LINKS}>
               {(comparison, index) => {

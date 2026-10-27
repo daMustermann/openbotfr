@@ -25,7 +25,7 @@ export function AppPreviewPage() {
     <div id="root" class="openbot-playground-root" data-preview-variant="landing">
       <Show
         when={mounted()}
-        fallback={<div class="openbot-playground-loading" role="status" aria-label="Loading OpenBot preview" />}
+        fallback={<div class="openbot-playground-loading" role="status" aria-label="Loading OpenBotFR preview" />}
       >
         <OpenBotPlayground variant="landing" />
       </Show>

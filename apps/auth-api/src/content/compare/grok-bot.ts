@@ -3,7 +3,7 @@ import { type Comparison, OPENBOT_TEXT } from "./comparison";
 
 // Every statement about Grok Bot here is taken from xAI's Grok Bot documentation,
 // and each page used is in `sources`. Check them again, and move `checkedAt`,
-// whenever this file changes. Statements about OpenBot follow its privacy notes and
+// whenever this file changes. Statements about OpenBotFR follow its privacy notes and
 // the remote connection that `remote/README.md` describes.
 
 const GROK_BOT_DOCS = "https://docs.x.ai/grok-bot";
@@ -11,7 +11,7 @@ const GROK_BOT_DOCS = "https://docs.x.ai/grok-bot";
 export const GROK_BOT_COMPARISON: Comparison = {
   rival: { name: "Grok Bot", mark: "grok-bot" },
   answer:
-    "For most people, OpenBot is the better choice: your agents use the AI plans you already pay for, such as ChatGPT, Claude, Gemini or Grok, or your own model. They run on your own computer, and the app is free. Choose Grok Bot only if you want a cloud computer to run your Bots, so that you keep no computer of your own on.",
+    "For most people, OpenBotFR is the better choice: your agents use the AI plans you already pay for, such as ChatGPT, Claude, Gemini or Grok, or your own model. They run on your own computer, and the app is free. Choose Grok Bot only if you want a cloud computer to run your Bots, so that you keep no computer of your own on.",
   chooseOpenBot: [
     "You already pay for ChatGPT, Claude, Gemini, Grok, Cursor, Cline or Muse Code, or you run your own model.",
     "Your files and chats must stay on your own computer.",
@@ -36,7 +36,7 @@ export const GROK_BOT_COMPARISON: Comparison = {
     {
       icon: "laptop",
       topic: "Where agents work",
-      openbot: "On the computer that runs OpenBot.",
+      openbot: "On the computer that runs OpenBotFR.",
       rival:
         "On a cloud computer that Cursor hosts, in the United States. With approval, it can also run tasks on your own computer.",
       better: "openbot",
@@ -156,14 +156,14 @@ export const GROK_BOT_COMPARISON: Comparison = {
     {
       title: "How agents work as a team",
       openbot:
-        "In OpenBot, a lead agent can give parts of a task to other agents in a shared channel. You follow their work and step in when a decision needs you. For a team of people, one computer runs the host and the others join it; the chats and files stay on the host. Roles set which agents each member can view, chat with or manage.",
+        "In OpenBotFR, a lead agent can give parts of a task to other agents in a shared channel. You follow their work and step in when a decision needs you. For a team of people, one computer runs the host and the others join it; the chats and files stay on the host. Roles set which agents each member can view, chat with or manage.",
       rival:
         "Grok Bot puts two to six Bots in a group chat, and one Bot can send a message to another that it answers later. Because the Bots of an account share one computer, a login or file there is available to every Bot. On the Teams plan, every member has Bots of their own.",
     },
     {
       title: "Data and privacy",
       openbot:
-        "OpenBot keeps workspaces, conversations, attachments and browser data in a SQLite database on the computer that runs it. OpenBot keeps no other copy. On a hosted OpenBot server, the database is on that server in the EU. An account holds only your profile, team memberships, invitations, sign-in sessions and the settings that let devices find each other.",
+        "OpenBotFR keeps workspaces, conversations, attachments and browser data in SQLite on the computer that runs it. The desktop app needs no OpenBotFR account. Remote access and accounts use optional services that you host yourself. OpenBotFR sends no product analytics or automatic error reports.",
       rival:
         "Grok Bot needs cloud data storage, and its computers run in the United States. With Privacy Mode on, customer data is not used for training. Connector tokens are never stored on the computer, and Cursor keeps a record of Bot actions for 90 days.",
       better: "openbot",
@@ -171,28 +171,28 @@ export const GROK_BOT_COMPARISON: Comparison = {
   ],
   faq: [
     {
-      question: "Is OpenBot an alternative to Grok Bot?",
+      question: "Is OpenBotFR an alternative to Grok Bot?",
       answer:
-        "Yes, if you want your agents on your own computer. Both give you persistent AI agents that work as a team. OpenBot runs them on your computer with the provider tools you choose. Grok Bot runs them on a cloud computer that Cursor hosts.",
+        "Yes, if you want your agents on your own computer. Both give you persistent AI agents that work as a team. OpenBotFR runs them on your computer with the provider tools you choose. Grok Bot runs them on a cloud computer that Cursor hosts.",
     },
     {
-      question: "Why choose OpenBot over Grok Bot?",
+      question: "Why choose OpenBotFR over Grok Bot?",
       answer:
-        "Your agents use the AI plans you already pay for, such as ChatGPT, Claude, Gemini or Grok, or your own model. OpenBot keeps your workspaces, chats and files on your own computer, the app is free, and its source code is on GitHub. You can reach your agents from your phone too. Grok Bot is the better fit only when you do not want to keep any computer on for your agents.",
+        "Your agents use the AI plans you already pay for, such as ChatGPT, Claude, Gemini or Grok, or your own model. OpenBotFR keeps your workspaces, chats and files on your own computer, the app is free, and its source code is on GitHub. You can reach your agents from your phone too. Grok Bot is the better fit only when you do not want to keep any computer on for your agents.",
     },
     {
-      question: "Can I use my ChatGPT, Claude or Gemini subscription with OpenBot?",
+      question: "Can I use my ChatGPT, Claude or Gemini subscription with OpenBotFR?",
       answer: OPENBOT_TEXT.plansFaq,
     },
     {
-      question: "Can I use my own model with OpenBot?",
+      question: "Can I use my own model with OpenBotFR?",
       answer:
         "Yes. Through OpenCode, an agent can use any OpenAI-compatible server, also a model that runs on your own computer. You add the address of the server, and an API key if it needs one.",
     },
     {
-      question: "Can OpenBot use Grok models?",
+      question: "Can OpenBotFR use Grok models?",
       answer:
-        "Yes. OpenBot can run Grok CLI as the provider of an agent, next to Codex, Claude Code, Gemini, Cursor CLI, Cline, OpenCode, Pi and Muse Code. Grok CLI then sends that agent's requests to xAI.",
+        "Yes. OpenBotFR can run Grok CLI as the provider of an agent, next to Codex, Claude Code, Gemini, Cursor CLI, Cline, OpenCode, Pi and Muse Code. Grok CLI then sends that agent's requests to xAI.",
     },
     {
       question: "Does Grok Bot run on my computer?",
@@ -200,24 +200,24 @@ export const GROK_BOT_COMPARISON: Comparison = {
         "Grok Bot works from a persistent cloud computer. Through the desktop app, it can also open files and run tasks on your own computer when the settings allow it. By default, it asks before each task.",
     },
     {
-      question: "Do my chats leave my computer with OpenBot?",
+      question: "Do my chats leave my computer with OpenBotFR?",
       answer:
-        "OpenBot keeps workspaces, conversations and files in a database on the computer that runs it, and OpenBot holds no copy. The provider you choose still gets the requests that your agents send to it.",
+        "OpenBotFR keeps workspaces, conversations and files in a database on the computer that runs it, and OpenBotFR holds no copy. The provider you choose still gets the requests that your agents send to it.",
     },
     {
       question: "Do agents keep working when my laptop is closed?",
       answer:
-        "Yes, with both. With OpenBot, run it on a desktop or a server that stays on, or on a hosted OpenBot server, and connect from your laptop or phone. Only that computer must stay on. With Grok Bot, closing the app or your laptop does not stop cloud work.",
+        "Yes, with both. With OpenBotFR, run it on a desktop or server that stays on, and connect from your laptop or phone. Only that computer must stay on. With Grok Bot, closing the app or your laptop does not stop cloud work.",
     },
     {
-      question: "Does OpenBot have a mobile app?",
+      question: "Does OpenBotFR have a mobile app?",
       answer:
-        "Yes. The OpenBot apps for iPhone and Android connect to the computer that runs your agents, over an encrypted connection. That computer must stay on, and remote access needs an OpenBot account. Your chats and files stay on that computer.",
+        "Yes. If you build the OpenBotFR mobile apps from source, they can connect to the computer that runs your agents over an encrypted connection. That computer must stay on, and remote access needs an account service that you host yourself. Your chats and files stay on that computer.",
     },
     {
-      question: "How much do OpenBot and Grok Bot cost?",
+      question: "How much do OpenBotFR and Grok Bot cost?",
       answer:
-        "OpenBot is free for noncommercial use, and commercial use needs a separate license. Each provider tool uses its own plan or API key. Grok Bot is included with paid Cursor plans, the Cursor Teams plan, and SuperGrok subscriptions linked to a Cursor account.",
+        "OpenBotFR is free for noncommercial use, and commercial use needs a separate license. Each provider tool uses its own plan or API key. Grok Bot is included with paid Cursor plans, the Cursor Teams plan, and SuperGrok subscriptions linked to a Cursor account.",
     },
   ],
   sources: [
@@ -232,8 +232,8 @@ export const GROK_BOT_COMPARISON: Comparison = {
     { label: "Grok Bot on mobile", url: "https://docs.x.ai/grok-bot/mobile" },
     { label: "Grok Bot Team Bots", url: "https://docs.x.ai/grok-bot/team-bots" },
     { label: "Grok Bot tag on X", url: "https://docs.x.ai/grok-bot/tag-on-x" },
-    { label: "OpenBot privacy notes", url: OPENBOT_LINKS.privacy },
-    { label: "OpenBot source code", url: OPENBOT_LINKS.repository },
+    { label: "OpenBotFR privacy notes", url: OPENBOT_LINKS.privacy },
+    { label: "OpenBotFR source code", url: OPENBOT_LINKS.repository },
   ],
   checkedAt: "2026-10-02",
 };

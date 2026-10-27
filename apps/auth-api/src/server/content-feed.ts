@@ -2,7 +2,6 @@
 // registries. They live here rather than inside the route files so that the
 // tests can assert on the XML without standing up a router.
 
-import { BRAND_PAGE_UPDATED_AT, BRAND_ROUTE } from "../lib/brand-page";
 import { changelogUrl } from "../lib/changelog";
 import { CHANGELOG_UPDATED_AT } from "../lib/changelog-releases";
 import { CONTENT_COLLECTIONS } from "../lib/content";
@@ -16,9 +15,7 @@ import {
 } from "../lib/content-collection";
 import { DOWNLOAD_PAGE_ORDER, DOWNLOAD_PAGES_UPDATED_AT, downloadPageUrl } from "../lib/download-pages";
 import { PLUGINS_UPDATED_AT, pluginIndexUrl, pluginUrl, SITE_PLUGINS } from "../lib/plugins";
-import { PRIVACY_POLICY_ROUTE, PRIVACY_POLICY_UPDATED_AT } from "../lib/privacy-policy";
-import { OPENBOT_SITE_TITLE, OPENBOT_SITE_URL } from "../lib/site-metadata";
-import { TEAMS_PAGE_UPDATED_AT, TEAMS_ROUTE } from "../lib/teams-page";
+import { OPENBOT_SITE_TITLE, siteUrlForPage } from "../lib/site-metadata";
 
 /**
  * The five characters XML reserves. `>` is only special after `]]`, but escaping
@@ -53,29 +50,26 @@ function latestSiteModifiedAt(): string {
   return CONTENT_COLLECTIONS.map(latestModifiedAt).toSorted().at(-1) ?? "2026-01-01";
 }
 
-function contentSitemapXml(): string {
+function contentSitemapXml(siteUrl: string): string {
   const entries = [
-    { loc: OPENBOT_SITE_URL, lastmod: latestSiteModifiedAt() },
-    { loc: downloadPageUrl("hub"), lastmod: DOWNLOAD_PAGES_UPDATED_AT },
+    { loc: siteUrl, lastmod: latestSiteModifiedAt() },
+    { loc: downloadPageUrl("hub", siteUrl), lastmod: DOWNLOAD_PAGES_UPDATED_AT },
     ...DOWNLOAD_PAGE_ORDER.map((platform) => ({
-      loc: downloadPageUrl(platform),
+      loc: downloadPageUrl(platform, siteUrl),
       lastmod: DOWNLOAD_PAGES_UPDATED_AT,
     })),
     ...CONTENT_COLLECTIONS.flatMap((collection) => [
-      { loc: collectionIndexUrl(collection), lastmod: latestModifiedAt(collection) },
+      { loc: collectionIndexUrl(collection, siteUrl), lastmod: latestModifiedAt(collection) },
       ...collection.articles.map((article) => ({
-        loc: articleUrl(collection, article.slug),
+        loc: articleUrl(collection, article.slug, siteUrl),
         lastmod: article.updatedAt ?? article.publishedAt,
       })),
     ]),
     /* The plugin pages hold no secret, unlike /join, so they are indexed like any article. Each
        entry's date is the catalog's own, which is what changes when a listing ships. */
-    { loc: pluginIndexUrl(), lastmod: PLUGINS_UPDATED_AT },
-    ...SITE_PLUGINS.map((plugin) => ({ loc: pluginUrl(plugin.slug), lastmod: PLUGINS_UPDATED_AT })),
-    { loc: changelogUrl(), lastmod: CHANGELOG_UPDATED_AT },
-    { loc: new URL(TEAMS_ROUTE, OPENBOT_SITE_URL).toString(), lastmod: TEAMS_PAGE_UPDATED_AT },
-    { loc: new URL(BRAND_ROUTE, OPENBOT_SITE_URL).toString(), lastmod: BRAND_PAGE_UPDATED_AT },
-    { loc: new URL(PRIVACY_POLICY_ROUTE, OPENBOT_SITE_URL).toString(), lastmod: PRIVACY_POLICY_UPDATED_AT },
+    { loc: pluginIndexUrl(siteUrl), lastmod: PLUGINS_UPDATED_AT },
+    ...SITE_PLUGINS.map((plugin) => ({ loc: pluginUrl(plugin.slug, siteUrl), lastmod: PLUGINS_UPDATED_AT })),
+    { loc: changelogUrl(siteUrl), lastmod: CHANGELOG_UPDATED_AT },
   ];
 
   const urls = entries
@@ -89,10 +83,10 @@ function contentSitemapXml(): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
 
-function contentRssXml(collection: ContentCollection): string {
+function contentRssXml(collection: ContentCollection, siteUrl: string): string {
   const items = collection.articles
     .map((article) => {
-      const url = articleUrl(collection, article.slug);
+      const url = articleUrl(collection, article.slug, siteUrl);
       return [
         "    <item>",
         `      <title>${escapeXml(article.title)}</title>`,
@@ -105,7 +99,7 @@ function contentRssXml(collection: ContentCollection): string {
         // RSS 2.0 `<author>` holds an email address, and a name there makes the
         // item invalid. Dublin Core's creator is the field for a name.
         `      <dc:creator>${escapeXml(article.author)}</dc:creator>`,
-        `      <enclosure url="${escapeXml(articleOgImageUrl(collection, article.slug))}" type="image/png" length="0" />`,
+        `      <enclosure url="${escapeXml(articleOgImageUrl(collection, article.slug, siteUrl))}" type="image/png" length="0" />`,
         "    </item>",
       ].join("\n");
     })
@@ -116,11 +110,11 @@ function contentRssXml(collection: ContentCollection): string {
     '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">',
     "  <channel>",
     `    <title>${escapeXml(`${collection.feedTitle} — ${OPENBOT_SITE_TITLE}`)}</title>`,
-    `    <link>${escapeXml(collectionIndexUrl(collection))}</link>`,
+    `    <link>${escapeXml(collectionIndexUrl(collection, siteUrl))}</link>`,
     `    <description>${escapeXml(collection.indexDescription)}</description>`,
     "    <language>en-us</language>",
     `    <lastBuildDate>${articleRssDate(latestPublishedAt(collection))}</lastBuildDate>`,
-    `    <atom:link href="${escapeXml(collectionFeedUrl(collection))}" rel="self" type="application/rss+xml" />`,
+    `    <atom:link href="${escapeXml(collectionFeedUrl(collection, siteUrl))}" rel="self" type="application/rss+xml" />`,
     items,
     "  </channel>",
     "</rss>",
@@ -131,8 +125,8 @@ function contentRssXml(collection: ContentCollection): string {
 /** One hour at the edge, one day while a redeploy is in flight. */
 export const FEED_CACHE_CONTROL = "public, max-age=3600, stale-while-revalidate=86400";
 
-export function contentSitemapResponse(): Response {
-  return new Response(contentSitemapXml(), {
+export function contentSitemapResponse({ request }: { request: Request }): Response {
+  return new Response(contentSitemapXml(siteUrlForPage(new URL(request.url))), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": FEED_CACHE_CONTROL,
@@ -141,8 +135,8 @@ export function contentSitemapResponse(): Response {
   });
 }
 
-export function contentRssResponse(collection: ContentCollection): Response {
-  return new Response(contentRssXml(collection), {
+export function contentRssResponse(collection: ContentCollection, request: Request): Response {
+  return new Response(contentRssXml(collection, siteUrlForPage(new URL(request.url))), {
     headers: {
       "Content-Type": "application/rss+xml; charset=utf-8",
       "Cache-Control": FEED_CACHE_CONTROL,

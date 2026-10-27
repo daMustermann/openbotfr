@@ -1,7 +1,6 @@
 import { isKnownAgentProvider } from "@openbot/contracts/agent-providers";
 import type { AppAppearance } from "@openbot/contracts/app-appearance";
 import type { AppLanguage } from "@openbot/contracts/app-language";
-import { HOSTED_SERVER_CONTACT_URL } from "@openbot/contracts/hosted-servers";
 import {
   type AddedAgent,
   type AgentProviderId,
@@ -70,8 +69,6 @@ import { computeAgentAvatarMoods } from "@openbot/ui/features/agents/agent-avata
 import { createFirstAgentDraft, type FirstAgentDraft } from "@openbot/ui/features/agents/FirstAgentSetup";
 import { BillingDialog } from "@openbot/ui/features/billing/BillingDialog";
 import { createBillingStore } from "@openbot/ui/features/billing/billing-store";
-import { LicenseSection } from "@openbot/ui/features/billing/LicenseSection";
-import { createLicenseStore } from "@openbot/ui/features/billing/license-store";
 import { unloadedHistory } from "@openbot/ui/features/conversation/ChatScrollRail";
 import type { DiagramModelChoice } from "@openbot/ui/features/diagrams/DiagramNewAgentCard";
 import { LeaveServerDialog } from "@openbot/ui/features/servers/LeaveServerDialog";
@@ -87,7 +84,6 @@ import { ServerRail } from "@openbot/ui/features/servers/ServerRail";
 import type { SettingsPagePlacement } from "@openbot/ui/features/settings/SettingsDialogShell";
 import { createSettingsHostedServersStore } from "@openbot/ui/features/settings/stores/hosted-servers-store";
 import { Sidebar } from "@openbot/ui/features/sidebar/Sidebar";
-import { SidebarCommunityCard } from "@openbot/ui/features/sidebar/SidebarCommunityCard";
 import {
   computeSidebarAgentStates,
   sidebarAgentWaits,
@@ -114,7 +110,6 @@ import {
 // Copying a selection with a formula in it gives its LaTeX source, as on desktop.
 import "katex/contrib/copy-tex";
 import { actionToast } from "../../action-toast";
-import { desktopAnalytics } from "../../analytics";
 import { toAgentMessage } from "../../app-message-projection";
 import { ProviderSignInDialogs } from "../../components/ProviderSignInDialogs";
 import { isGlobalSearchShortcut } from "../../global-search-shortcut";
@@ -157,13 +152,7 @@ import type { FilesPort } from "../files/files-port";
 import { hostSetupProviderProps } from "../onboarding/host-setup-provider-props";
 import { createRoutineTimezonePrompt } from "../schedule/routine-timezone-prompt";
 import type { ScheduleRoutine } from "../schedule/SchedulePanel";
-import { AddServerOverlay, type AddServerResume } from "../servers/AddServerOverlay";
-import {
-  createHostedUpsellOffline,
-  HostedServerUpsell,
-  hostedUpsellRoutineCreated,
-  routineMadeThisSession,
-} from "../servers/hosted-server-upsell-controller";
+import type { AddServerResume } from "../servers/AddServerOverlay";
 import type { HostMemoryLimitCalls } from "../servers/ServerMemoryLimitSetting";
 import type { HostAgentAccessCalls } from "../servers/ServerRolesSection";
 import type { ServerHostedSitesOptions, ServerSettingsSection } from "../servers/ServerSettingsModal";
@@ -182,9 +171,7 @@ import {
   serverUpdateBadge,
   showServerUpdate,
 } from "../servers/server-update-flow";
-import { licenseContactUs, trackLicenseEvent } from "../settings/license-analytics";
 import type { HostPromptCacheTtlCalls } from "../settings/provider-prompt-cache";
-import { createCommunityCardVisibility } from "../sidebar/community-card";
 import { isReaderAuthor } from "../team/reader-identity";
 import type { ServerVaultOptions } from "../vault/ServerVaultPanel";
 import { createVaultStore } from "../vault/stores/vault-store";
@@ -234,7 +221,7 @@ const CONNECTING_STATUS: AgentStatus = {
  * What the web client reports as its build. The browser has no main process to ask, and the web frame
  * uses the macOS geometry.
  */
-const WEB_APP_INFO: AppInfo = { name: "OpenBot", version: "web", platform: "darwin", variant: "production" };
+const WEB_APP_INFO: AppInfo = { name: "OpenBotFR", version: "web", platform: "darwin", variant: "production" };
 /** Below this width the web shows one pane at a time; see `web-client.css`. */
 const PHONE_QUERY = "(max-width: 720px)";
 /** The account whose queue edit the browser may hold under `QUEUE_EDIT_STORAGE_KEY`. */
@@ -271,7 +258,7 @@ type WebWorkspaceProps = {
   /** True on a return from the Stripe Customer Portal. The Billing dialog opens on it. */
   billingReturn?: boolean;
   onBillingReturnConsumed?: () => void;
-  /** The server of a return from Stripe Checkout. The add server dialog opens on its progress. */
+  /** Legacy checkout return. Consume it without opening a purchase dialog. */
   hostingReturn?: AddServerResume | null;
   onHostingReturnConsumed?: () => void;
   /** The interface language this browser keeps. Account settings change it. */
@@ -418,10 +405,13 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
   const hostedServers = createWebHostedServers({
     accountFetch: props.accountFetch,
     hosts: () => workspace.state.hosts,
-    hostingReturn: () => props.hostingReturn,
-    onHostingReturnConsumed: () => props.onHostingReturnConsumed?.(),
-    onJoin: () => setJoinOpen(true),
   });
+  createEffect(
+    () => props.hostingReturn,
+    (hostingReturn) => {
+      if (hostingReturn) props.onHostingReturnConsumed?.();
+    },
+  );
   const [creating, setCreating] = createSignal(false);
   /** The new agent form's avatar. The first-agent row in an empty sidebar shows it. */
   const [agentAvatar, setAgentAvatar] = createSignal(newAgentAvatar());
@@ -571,7 +561,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
         : null,
   });
   const [searchOpen, setSearchOpen] = createSignal(false);
-  const communityCard = createCommunityCardVisibility();
   const [messageFocusRequest, setMessageFocusRequest] = createSignal<{
     agentId: string;
     messageId: string;
@@ -840,7 +829,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
   const billingCalls = createWebBillingCalls(props.accountFetch);
   const billing = createBillingStore(() => billingCalls, billingOpen);
   const licenseCalls = createWebLicenseCalls(props.accountFetch);
-  const license = createLicenseStore(() => licenseCalls, billingOpen, trackLicenseEvent);
   // The web client has no Hosted servers settings, so a server whose plan ended is renewed or deleted in Billing.
   const billingHostedServers = createSettingsHostedServersStore(
     {
@@ -1339,7 +1327,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
     return () =>
       Effect.runPromise(clearAgentContext(hostRequest(), agent.id).pipe(Effect.mapError((error) => error.cause)));
   });
-  const offlineUpsell = createHostedUpsellOffline(() => workspace.state.hostOffline);
   const view = createWebConversationView({
     workspace,
     remoteAgentAdmin,
@@ -1375,27 +1362,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
       },
     });
   });
-  // A routine that an agent makes leaves a marker in its turn. The offer of a hosted server waits until that turn ends.
-  // The marker does not tell whether the routine is paused; an agent makes an active routine unless told otherwise.
-  createEffect(
-    () => {
-      const agentId = workspace.conversation()?.page?.agentId;
-      if (!agentId) return [];
-      return view.messages.flatMap((message) => {
-        const marker = message.actionMarker;
-        return message.turnId && marker?.kind === "routine-lifecycle" && marker.action === "created"
-          ? [{ id: marker.routineId, name: marker.routineName, createdAt: marker.timestamp, agentId }]
-          : [];
-      });
-    },
-    (created) => {
-      for (const routine of created) {
-        if (routineMadeThisSession(routine.createdAt)) {
-          hostedUpsellRoutineCreated({ id: routine.id, name: routine.name, agentId: routine.agentId });
-        }
-      }
-    },
-  );
   createEffect(
     () => workspace.state.error,
     (error) => {
@@ -1657,7 +1623,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                     busy={workspace.state.status === "connecting" || !workspace.state.host}
                     onRetry={() => void workspace.run(workspace.reconnect)}
                     onManage={() => setBillingOpen(true)}
-                    upsell={offlineUpsell()}
                   />
                 </Show>
                 <Show when={workspace.state.status === "online" && workspace.state.panelsFailed}>
@@ -1791,8 +1756,8 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                     servers={servers()}
                     onSelect={selectServer}
                     onReorder={workspace.reorderHosts}
-                    onAdd={() => hostedServers.openAddServer("server_rail")}
-                    addCreatesServer={hostedServers.available()}
+                    onAdd={() => setJoinOpen(true)}
+                    addCreatesServer={false}
                     {...serverActionCallbacks}
                   />
                 </Show>
@@ -1825,7 +1790,7 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                   // The browser client does not know the unread counts of agent chats it has not opened.
                   hasUnread
                   view={layout.sidebarView()}
-                  serverName={workspace.state.host?.name ?? "OpenBot"}
+                  serverName={workspace.state.host?.name ?? "OpenBotFR"}
                   serverUpdate={(() => {
                     const id = server()?.id;
                     const badge = id ? serverUpdateBadge(id) : null;
@@ -1836,8 +1801,8 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                     view: layout.serverView(),
                     onViewChange: layout.setServerView,
                     onSelect: selectServer,
-                    onAdd: () => hostedServers.openAddServer("server_rail"),
-                    addCreatesServer: hostedServers.available(),
+                    onAdd: () => setJoinOpen(true),
+                    addCreatesServer: false,
                     ...serverActionCallbacks,
                   }}
                   agents={workspace.profiles()}
@@ -1897,15 +1862,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                   onExpand={layout.expandSidebar}
                   onOpenSearch={() => setSearchOpen(true)}
                   onOpenMarketplace={openMarketplace}
-                  footer={
-                    <Show when={!communityCard.dismissed()}>
-                      <SidebarCommunityCard
-                        onJoinDiscord={() => void openWebDestination("discord")}
-                        onFollowX={() => void openWebDestination("x")}
-                        onDismiss={communityCard.dismiss}
-                      />
-                    </Show>
-                  }
                   emptyAction={
                     firstAgent()
                       ? {
@@ -1923,42 +1879,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
             after={
               <>
                 <ServerUpdateDialogHost hosts={workspace.hostViews()} />
-                <HostedServerUpsell
-                  accountId={props.accountId}
-                  canOffer={
-                    hostedServers.available() &&
-                    hostedServers.loaded() &&
-                    !hostedServers.ownsHostedServer() &&
-                    server()?.role === "owner" &&
-                    server()?.hosted !== true
-                  }
-                  serverId={server()?.id ?? ""}
-                  host={{ name: server()?.name ?? "" }}
-                  busy={(agentId) => Boolean(workspace.state.conversations[agentId]?.page?.activeTurnId)}
-                  openPlans={() => hostedServers.openAddServer("upsell")}
-                  track={(action, entryPoint) =>
-                    desktopAnalytics.track("hosted_server_upsell", { action, entry_point: entryPoint })
-                  }
-                />
-                <AddServerOverlay
-                  open={hostedServers.addServer() !== null}
-                  entryPoint={hostedServers.addServer()?.entryPoint}
-                  calls={hostedServers.calls}
-                  servers={servers()}
-                  onRefreshServers={workspace.retryHosts}
-                  resume={hostedServers.addServer()?.resume}
-                  onClose={hostedServers.closeAddServer}
-                  onOpenServer={(serverId) => {
-                    hostedServers.closeAddServer();
-                    selectServer(serverId);
-                  }}
-                  onContactUs={() => window.location.assign(HOSTED_SERVER_CONTACT_URL)}
-                  onJoinWithInvite={() => {
-                    hostedServers.closeAddServer();
-                    setJoinOpen(true);
-                  }}
-                  onManageServers={() => setBillingOpen(true)}
-                />
                 <JoinServerOverlay
                   open={joinOpen()}
                   inviteUrl={props.inviteUrl ?? ""}
@@ -2018,7 +1938,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                       onSetPublished={unavailable}
                       onCreateInvite={serverSettings.createInvite}
                       license={licenseCalls}
-                      onContactUs={() => window.location.assign(HOSTED_SERVER_CONTACT_URL)}
                       onUpdateMember={serverSettings.updateMember}
                       onRemoveMember={serverSettings.removeMember}
                       onRevokeInvite={serverSettings.revokeInvite}
@@ -2136,13 +2055,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                   onOpenChange={setBillingOpen}
                   store={billing}
                   hostedServers={billingHostedServers}
-                  license={
-                    <LicenseSection
-                      store={license}
-                      onManagePayment={() => void billing.openPortal({ flow: "manage" })}
-                      onContactUs={licenseContactUs(() => window.location.assign(HOSTED_SERVER_CONTACT_URL))}
-                    />
-                  }
                 />
                 <ChannelCreateOverlay />
                 <GlobalSearchOverlay
@@ -2328,13 +2240,6 @@ function WebWorkspaceFrame(props: WebWorkspaceProps) {
                 failed={Boolean(workspace.state.hostsError)}
                 reference={workspace.state.hostsError?.reference ?? null}
                 onJoin={() => setJoinOpen(true)}
-                onCreateServer={
-                  // An account with a hosted server that is not a host yet, such as one that waits for payment,
-                  // must not buy a second one from here.
-                  hostedServers.available() && !hostedServers.ownsHostedServer()
-                    ? () => hostedServers.openAddServer("empty_state")
-                    : undefined
-                }
                 onRefresh={() => void workspace.run(workspace.refreshHosts)}
               />
             </Show>

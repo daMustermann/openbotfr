@@ -2,7 +2,6 @@ import { isDynamicRecord, isString } from "@openbot/contracts/runtime-values";
 import type { JSX } from "@solidjs/web";
 import { Link } from "@tanstack/solid-router";
 import { createSignal, createUniqueId, For, Show } from "solid-js";
-import { CONTACT_EMAIL } from "../../lib/contact";
 import { LandingIcon } from "../landing/LandingIcon";
 import type { ReportSiteText } from "../transactional/page-text";
 import { TransactionalPage } from "../transactional/TransactionalPage";
@@ -13,7 +12,7 @@ const REPORT_REASONS = ["phishing", "malware", "abuse", "copyright", "other"] as
 const DETAILS_LIMIT = 1_000;
 
 /** An example value, not text: it is the same in all languages. */
-const HOSTNAME_EXAMPLE = "example.openbot.site";
+const HOSTNAME_EXAMPLE = "example.org";
 
 type ReportStatus = "idle" | "sending" | "sent" | "failed";
 
@@ -174,9 +173,7 @@ export function ReportSitePage(props: { hostname: string; lang: string; text: Re
             </button>
             <Show when={form.status() === "failed"}>
               <p class="contact-privacy contact-failed" role="alert">
-                {form.failure()} {props.text.writeTo.before}
-                <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-                {props.text.writeTo.after}
+                {form.failure()}
               </p>
             </Show>
           </div>

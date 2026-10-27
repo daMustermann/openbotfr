@@ -66,6 +66,7 @@ export interface BrowserApiServices {
     "list" | "plans" | "create" | "checkout" | "delete" | "wake" | "restart" | "status" | "lifecycle"
   >;
   inviteEmailDelivery: () => TeamInviteEmailDelivery | null;
+  inviteEmailOrigin: () => string | undefined;
   attribution: () => Pick<AccountAttribution, "recordCheckout">;
   /** The billing service, or null when this deployment has no Stripe key. */
   billing: () => Pick<BillingService, "getState" | "createPortal" | "license"> | null;
@@ -277,6 +278,7 @@ const handleBrowserOperation = Effect.fn("BrowserApi.handleOperation")(function*
       user,
       body,
       services.sourceIp(request),
+      services.inviteEmailOrigin(),
     );
     return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   }

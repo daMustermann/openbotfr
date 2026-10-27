@@ -1,4 +1,3 @@
-import type { HostedServerEntryPoint } from "@openbot/contracts/hosted-servers";
 import type { HostStatus, ServerNotificationLevel, ServerSummary } from "@openbot/contracts/ipc";
 import type { TeamCurrentCapability } from "@openbot/contracts/team-protocol/current";
 import { WAKE_RECONNECT_STATES } from "@openbot/team-client/hosted-server-wake";
@@ -56,12 +55,7 @@ const Servers = createSimpleContext({
     const [servers, setServers] = createSignal<ServerSummary[]>([]);
     const [hostStatus, setHostStatus] = createSignal<HostStatus>(FALLBACK_HOST_STATUS);
     const [joinServerOpen, setJoinServerOpen] = createSignal(false);
-    /** Where the user opened the hosted server plans, or null while they are closed. */
-    const [addServerEntryPoint, setAddServerEntryPoint] = createSignal<HostedServerEntryPoint | null>(null);
-    const addServerOpen = () => addServerEntryPoint() !== null;
-    const setAddServerOpen = (...args: [open: false] | [open: true, entryPoint: HostedServerEntryPoint]) =>
-      setAddServerEntryPoint(args[0] ? args[1] : null);
-    // True when the account can create hosted servers. The plus button then opens the plans.
+    // Keep account-hosted server metadata for existing servers and their management actions.
     const [hostedServersAvailable, setHostedServersAvailable] = createSignal(false);
     /** The hosted servers of this account. The server menu can delete these. */
     const [hostedServerIds, setHostedServerIds] = createSignal<ReadonlySet<string>>(new Set());
@@ -274,7 +268,7 @@ const Servers = createSimpleContext({
         .then(setHostStatus)
         .catch(() => undefined);
       void refreshHostedServersAvailable();
-      // Another account can sign in after the start, so the plus button reads its access again.
+      // Another account can sign in after start, so existing hosted-server actions stay current.
       let signedInUserId: string | null = null;
       const unsubscribeAuth = serversPort().auth.onEvent((state) => {
         if (state.status !== "signed_in" && state.status !== "signed_out") return;
@@ -423,9 +417,6 @@ const Servers = createSimpleContext({
       setHostStatus,
       joinServerOpen,
       setJoinServerOpen,
-      addServerOpen,
-      addServerEntryPoint,
-      setAddServerOpen,
       hostedServersAvailable,
       hostedServerIds,
       hostedServersLoaded,

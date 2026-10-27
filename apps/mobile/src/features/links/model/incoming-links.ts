@@ -1,5 +1,6 @@
 import {
   createAgentTemplateShareUrl,
+  createOpenBotAgentTemplateUrl,
   OPENBOT_AGENT_TEMPLATE_PATH_PREFIX,
   parseAgentTemplateUrl,
 } from "@openbot/contracts/agent-template-links";
@@ -19,7 +20,13 @@ function parseIncomingLink(value: string): IncomingLink {
   if (isInviteLink(value)) return { kind: "invite", url: value };
   try {
     const templateId = parseAgentTemplateUrl(value);
-    return { kind: "template", url: createAgentTemplateShareUrl(templateId), templateId };
+    return {
+      kind: "template",
+      url: value.startsWith("openbot:")
+        ? createOpenBotAgentTemplateUrl(templateId)
+        : createAgentTemplateShareUrl(templateId),
+      templateId,
+    };
   } catch {
     // Not an agent link.
   }

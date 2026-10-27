@@ -1,6 +1,5 @@
 import { type AvatarMimeType, isValidAvatarImage } from "@openbot/contracts/avatar-images";
 import { AVATAR_IMAGE_LIMITS } from "@openbot/contracts/input-limits";
-import { OPENBOT_CONTROL_PLANE_ORIGIN } from "@openbot/contracts/invite-links";
 import type { CentralAuthUser } from "@openbot/contracts/ipc";
 import {
   isMobileConnectDevelopmentHost,
@@ -114,10 +113,14 @@ async function redeemMobileConnectSession(value: string): Promise<MobileSession>
   return session;
 }
 
-/** The account service for email sign-in. A development build can name a local one. */
-function mobileAccountApiUrl(): string {
+/** Email sign-in is available only with an explicit, validated account service. */
+function mobileAccountApiUrl(): string | null {
   const override = process.env.EXPO_PUBLIC_OPENBOT_API_URL;
-  return (override && __DEV__ && normalizeAccountApiUrl(override)) || OPENBOT_CONTROL_PLANE_ORIGIN;
+  return override ? normalizeAccountApiUrl(override) : null;
+}
+
+export function mobileEmailSignInAvailable(): boolean {
+  return mobileAccountApiUrl() !== null;
 }
 
 export interface MobileEmailChallenge {
@@ -173,18 +176,29 @@ export async function verifyMobileEmailCode(challengeId: string, code: string): 
         "invalid_sign_in_code",
       );
     }
+    const apiUrl = mobileAccountApiUrl();
+    if (!apiUrl) {
+      throw new MobileEmailSignInError(
+        currentText().t("mobile.auth.error.accountServiceUnreachable"),
+        "auth_api_unconfigured",
+      );
+    }
     void retryMobileSessionRevocations();
     const current = await serializeMobileSessionStorage(() => readStoredSessionAndRevokeInvalid(true));
     if (current) throw new Error(currentText().t("mobile.auth.error.alreadySignedIn"));
     const device = await mobileDeviceIdentity();
-    const apiUrl = mobileAccountApiUrl();
-    const { response, body } = await mobileEmailRequest("/v1/mobile-auth/email/verify", {
-      challengeId,
-      code: normalized,
-      deviceId: device.id,
-      deviceName: device.name,
-      platform: device.platform,
-    });
+    const { response, body } = await mobileEmailRequest(
+      "/v1/mobile-auth/email/verify",
+      {
+        challengeId,
+        code: normalized,
+        deviceId: device.id,
+        deviceName: device.name,
+        platform: device.platform,
+      },
+      {},
+      apiUrl,
+    );
     if (!response.ok) throw mobileEmailError(response, body, "mobile.auth.email.error.verifyFailed");
     const session = decodeMobileSession(body, apiUrl, true);
     await saveMobileSession(session);
@@ -198,10 +212,17 @@ async function mobileEmailRequest(
   path: string,
   payload: Record<string, string>,
   headers: Record<string, string> = {},
+  apiUrl = mobileAccountApiUrl(),
 ): Promise<{ response: Response; body: DynamicRecord | null }> {
+  if (!apiUrl) {
+    throw new MobileEmailSignInError(
+      currentText().t("mobile.auth.error.accountServiceUnreachable"),
+      "auth_api_unconfigured",
+    );
+  }
   try {
     return await withMobileAuthRequestTimeout(async (signal) => {
-      const request = await fetch(new URL(path, mobileAccountApiUrl()).toString(), {
+      const request = await fetch(new URL(path, apiUrl).toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify(payload),

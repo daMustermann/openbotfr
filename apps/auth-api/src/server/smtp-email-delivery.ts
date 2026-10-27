@@ -1,5 +1,5 @@
 import { INPUT_LIMITS } from "@openbot/contracts/input-limits";
-import { isCanonicalInviteUrl } from "@openbot/contracts/invite-links";
+import { isCanonicalInviteUrl, parseInviteUrl } from "@openbot/contracts/invite-links";
 import { isValidHostname as isSharedValidHostname } from "@openbot/contracts/validation";
 import { Effect, Fiber, Option, Result, Schema } from "effect";
 import {
@@ -31,6 +31,7 @@ export interface SmtpTeamInviteMessage {
   inviterEmail: string;
   serverName: string;
   inviteUrl: string;
+  selfHostedApiOrigin?: string | undefined;
   role: "admin" | "member";
 }
 
@@ -146,7 +147,7 @@ export const sendPrivateTeamInvite = Effect.fn("Smtp.sendPrivateTeamInvite ")(fu
     ) {
       throw new Error("smtp_invalid_server_name");
     }
-    if (!isCanonicalInviteUrl(message.inviteUrl)) {
+    if (!isCanonicalInviteUrl(message.inviteUrl) && !isSelfHostedInvite(message)) {
       throw new Error("smtp_invalid_invite_url");
     }
   });
@@ -164,6 +165,17 @@ export const sendPrivateTeamInvite = Effect.fn("Smtp.sendPrivateTeamInvite ")(fu
     connector,
   );
 });
+
+function isSelfHostedInvite(message: SmtpTeamInviteMessage): boolean {
+  if (!message.selfHostedApiOrigin) return false;
+  try {
+    if (new URL(message.inviteUrl).protocol !== "openbot:") return false;
+    const link = parseInviteUrl(message.inviteUrl, { selfHostedApiOrigin: message.selfHostedApiOrigin });
+    return new URL(link.apiUrl).origin === message.selfHostedApiOrigin;
+  } catch {
+    return false;
+  }
+}
 
 /** Sends the welcome email of an account's first plan. A reply goes to the sending mailbox. */
 export const sendPrivateWelcomeEmail = Effect.fn("Smtp.sendPrivateWelcomeEmail")(function* (

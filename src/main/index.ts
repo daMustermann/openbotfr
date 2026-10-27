@@ -1,3 +1,4 @@
+import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseInviteUrl, selfHostedApiOrigin } from "@openbot/contracts/invite-links";
 import {
@@ -194,7 +195,12 @@ if (configureLinuxPasswordStore())
   logger.info(`No Chromium keyring for "${process.env.XDG_CURRENT_DESKTOP ?? ""}"; using gnome-libsecret.`);
 if (commandLineUserDataDirectory) {
   app.setPath("userData", resolve(commandLineUserDataDirectory));
-} else if (!app.isPackaged) {
+} else if (app.isPackaged) {
+  // Keep the released profile path. A new product name must not hide existing databases or keys.
+  const installedUserDataDirectory = join(app.getPath("appData"), "OpenBot");
+  mkdirSync(installedUserDataDirectory, { recursive: true });
+  app.setPath("userData", installedUserDataDirectory);
+} else {
   app.setPath(
     "userData",
     join(
@@ -206,7 +212,7 @@ if (commandLineUserDataDirectory) {
     ),
   );
 }
-app.setName("OpenBot");
+app.setName("OpenBotFR");
 app.enableSandbox();
 if (process.platform === "win32") app.setAppUserModelId("app.openbot.desktop");
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -796,7 +802,7 @@ function requestDesktopNotificationPermission(
       preference,
       showWelcome: () => {
         if (!Notification.isSupported()) return;
-        showRetainedNotification(new Notification({ title: "OpenBot", body: translate("notification.welcome") }));
+        showRetainedNotification(new Notification({ title: "OpenBotFR", body: translate("notification.welcome") }));
       },
     }),
   );

@@ -274,9 +274,6 @@ export class RemoteTeamDirectoryClient {
         token: "x".repeat(32),
       };
       yield* directoryDecode(() => createInviteUrl(payload, this.#inviteLinks));
-      // The account service cannot email links for a self-hosted service.
-      if (input.email && selfHostedApiOrigin(payload.apiUrl))
-        return yield* directoryFailure(sourceText("error.remote.selfHostedInviteNoEmail"));
       const value = yield* this.#request(`/v2/remote/hosts/${encodeURIComponent(host.hostId)}/invites`, {
         method: "POST",
         body: input,

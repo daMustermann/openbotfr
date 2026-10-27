@@ -25,7 +25,11 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { mobileAnalytics } from "@/features/analytics/mobile-analytics";
-import { type MobileSession, redeemMobileConnectUrl } from "@/features/auth/api/mobile-auth";
+import {
+  type MobileSession,
+  mobileEmailSignInAvailable,
+  redeemMobileConnectUrl,
+} from "@/features/auth/api/mobile-auth";
 import type { EmailCodeInputHandle } from "@/features/auth/components/email-code-input";
 import { QrScanner, type ScannerMode, type ScanStatus } from "@/features/auth/components/qr-scanner";
 import {
@@ -136,6 +140,7 @@ interface ScanState {
  */
 export function SignInScreen({ notice }: { notice?: SignInNotice }) {
   const { t } = useText();
+  const emailAvailable = mobileEmailSignInAvailable();
   const reportContentReady = useContext(SplashContentReadyContext);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -400,6 +405,7 @@ export function SignInScreen({ notice }: { notice?: SignInNotice }) {
             onToggleHelp={() => undefined}
             onScan={() => undefined}
             onEmail={() => undefined}
+            emailAvailable={emailAvailable}
             onLayout={setOptionsHeight}
             onHelpLayout={setHelpHeight}
             reduced={reduced}
@@ -425,6 +431,7 @@ export function SignInScreen({ notice }: { notice?: SignInNotice }) {
               onToggleHelp={() => setHelpOpen((open) => !open)}
               onScan={openScanner}
               onEmail={signIn.openEmail}
+              emailAvailable={emailAvailable}
               reduced={reduced}
             />
           </Animated.View>

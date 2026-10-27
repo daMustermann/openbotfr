@@ -1,171 +1,148 @@
-# Self-hosted remote access
+# Optional self-hosted remote access
 
-This guide tells you how to run your own account service (the Account API Worker), Signal and TURN
-for remote access. Use it when you do not want `api.openbot.run` and `signal.openbot.run` to carry
-your account and connection set-up.
+OpenBotFR is a local desktop application first. You do not need a central
+account service, Cloudflare, Signal, or TURN to use agents on one computer.
+Use this guide only if you need remote Team connections to another computer.
 
-Our Worker does not issue a ticket for another Signal. A ticket gives access to a host, and our key
-signs it, so a ticket for your Signal would also open our Signal. Thus a self-hosted Signal needs a
-self-hosted account service with its own keys. See
-[issue #1263](https://github.com/nightly-labs/openbot/issues/1263).
+## Current limits
 
-## What changes
+The remote connection code is inherited from upstream OpenBot. It still needs
+an account service to issue signed connection tickets. The account Worker
+stores accounts and access permissions; Signal sets up WebRTC connections,
+and TURN relays them when direct connections fail. The account Worker does not
+store conversations or workspace files. A self-hosted setup still has **local
+accounts** and email-code sign-in for remote membership. Account-free remote
+Team access is not yet implemented.
 
-- Accounts on your service are separate from accounts on `openbot.run`. Each person signs in again.
-- Each desktop and phone that connects to a host must use the same service.
-- Invitations are `openbot://join` links. Copy a link from the app and send it yourself. The app
-  does not send an invitation by email.
-- The browser client at `openbot.run/app` does not work with your service.
-- Hosted servers, the OpenBot GitHub App, Slack, the OpenBot Telegram bot and the iPhone Live
-  Activity relay stay off. Each needs secrets that only we have.
-- The other network connections in [PRIVACY.md](../PRIVACY.md) do not change.
+The current code supports `OPENBOT_AUTH_API_URL` and
+`OPENBOT_REMOTE_SIGNAL_URL` for the desktop. This is a configuration path,
+not proof that all remote features have passed an end-to-end test in this
+fork. The desktop account API fallback is `http://127.0.0.1:3100`.
 
-## What you need
+**Telemetry:** The public analytics gate and account analytics transport are
+disabled. Sales analytics delivery is disabled and OpenPanel credentials are
+not needed to deploy the Worker. Existing billing records remain in D1.
+Full remote-service network verification is still required before a release.
 
-- A Cloudflare account with Workers, D1 and R2, and a domain on Cloudflare.
-- A Linux server with Docker Engine, Docker Compose and a static public IPv4 address. See the
-  [Signal production requirements](../remote/README.md#production-requirements) for ports and DNS.
-- An SMTP account that accepts TLS on port 465. Sign-in sends a one-time code by email.
-- A clone of the OpenBot release that you run, and [Bun](https://bun.sh).
+## Local use
 
-In the examples, the account service is `api.example.com`, Signal is `signal.example.com` and TURN is
-`turn.example.com`. Use your own names.
+1. Build the desktop app from this checkout. See [Install](../README.md#install).
+2. Start the desktop app and configure a provider or a local model server.
+3. Keep the local database and workspaces on the machine that runs agents.
+   No hosted account registration is part of this flow.
 
-## 1. Make the keys
+For development, `bun run dev` starts the local Auth API, Signal, and desktop
+app. Use the ports reported by the dev runner. This development stack is
+not a production remote-access service. It can help validate the local
+account and remote paths before you deploy them.
 
-Run this command from the repository root. It prints the ticket key pair:
+## Remote access architecture
 
-```sh
-bun -e 'const { generateKeyPairSync } = require("node:crypto"); const kid = "self-hosted-1"; const meta = { kid, alg: "ES256", use: "sig" }; const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" }); console.log(`REMOTE_TICKET_KEY_ID=${kid}`); console.log(`REMOTE_TICKET_PRIVATE_JWK=\x27${JSON.stringify({ ...privateKey.export({ format: "jwk" }), ...meta })}\x27`); console.log(`REMOTE_TICKET_PUBLIC_JWKS=\x27${JSON.stringify({ keys: [{ ...publicKey.export({ format: "jwk" }), ...meta }] })}\x27`);'
+```text
+Remote client
+    |  account sign-in and ticket request
+    v
+Your account API (HTTPS) -- accounts, memberships, sessions
+    |  signed ticket and public keys
+    v
+Your Signal (WSS) -- WebRTC setup messages
+    |  direct peer connection or your TURN relay
+    v
+Your OpenBotFR host -- local SQLite, agents, files, commands
 ```
 
-Make each other secret with `openssl rand -base64 48`:
+The current remote protocol expects the desktop clients and the host to
+use the same account and Signal services. A ticket signed for one service
+must not be accepted by a separate service with different access rules.
+Use a separate key pair for your installation. Invitation links still use
+the `openbot://join` protocol.
 
-| Secret | Where |
-| --- | --- |
-| `REMOTE_AUTH_WEBHOOK_SECRET` | Worker and Signal. Use the same value on both. |
-| `SKILLS_ADMIN_TOKEN`, `SITE_REPORT_HASH_SECRET` | Worker |
-| `REMOTE_SESSION_SECRET`, `TURN_SHARED_SECRET`, `REMOTE_METRICS_TOKEN` | Signal |
+To prepare an independent remote service, you need:
 
-Keep the private JWK secret. With it, a person can open each host that uses your service.
+- A dedicated domain with HTTPS for the account API and WSS for Signal.
+- A Cloudflare Worker with D1 and R2 for the current account API code.
+- A Linux host for Signal and coturn, with publicly reachable ports and a
+  TLS certificate. See [remote requirements](../remote/README.md#production-requirements).
+- SMTP credentials to send one-time remote sign-in codes.
+- `SELF_HOSTED_PUBLIC_ORIGIN=https://api.example.com` in the account Worker
+  settings. Set it to the same HTTPS origin that desktop and mobile use for
+  `OPENBOT_AUTH_API_URL` and `EXPO_PUBLIC_OPENBOT_API_URL`. Do not include a
+  path, a query, or credentials. The Worker checks this setting before it
+  emails `openbot://join` invitations. Without it, self-hosted invitation
+  email is rejected and the client revokes the unused invitation.
+- Separate ES256 ticket signing keys and the matching public JWKS, plus
+  webhook, session, TURN, and service secrets.
 
-## 2. Deploy the account service
+The source currently uses `apps/auth-api/wrangler.jsonc` for Worker routes,
+D1, R2, and service configuration. Replace the upstream routes, account IDs,
+database IDs, storage names, SMTP settings, Signal URL, and webhooks when you
+prepare your own environment. Set `HOSTED_SERVERS_ENABLED` to `"false"`
+and do not configure paid hosted server provisioning. Do not deploy the
+upstream `openbot.run` routes or use its Cloudflare resources.
 
-1. Install the dependencies and sign in to Cloudflare:
+The repository requires encrypted `apps/auth-api/.env.dev` and
+`apps/auth-api/.env.production` for shared account settings. Do not create
+`apps/auth-api/.env.self-hosted`, `.env.local`, or new key pairs for Dotenvx.
+The root `.env.keys` contains the existing Dotenvx keys. Use development
+settings for local tests; keep your own production secrets isolated. The
+current production deployment script and settings are tied to upstream
+services. Review and change that implementation before any remote deploy.
+See [account service setup](../apps/auth-api/README.md) for its current
+requirements and [Privacy](../PRIVACY.md) for open issues.
 
-   ```sh
-   bun install --frozen-lockfile
-   cd apps/auth-api
-   bunx wrangler login
-   bunx wrangler d1 create openbot-auth
-   bunx wrangler r2 bucket create openbot-avatars
-   bunx wrangler r2 bucket create openbot-skills
-   bunx wrangler r2 bucket create openbot-sites
-   ```
+## Point a desktop app to your service
 
-2. Edit the top level of `apps/auth-api/wrangler.jsonc`. Do not change the `env` section.
-   - `routes`: replace all entries with `{ "pattern": "api.example.com", "custom_domain": true }`.
-   - `d1_databases`: set `database_id` to the ID that `d1 create` printed.
-   - `r2_buckets`: set the bucket names, if you used other names.
-   - `vars`:
-     - `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_SMTP_USERNAME`, `EMAIL_FROM`: your SMTP account.
-     - `REMOTE_TICKET_KEY_ID`: the key ID from step 1.
-     - `REMOTE_SIGNAL_URL`: `wss://signal.example.com/v1/signal`.
-     - `REMOTE_AUTH_WEBHOOK_URL`: `https://signal.example.com/internal/auth-events`.
-     - `HOSTED_SERVERS_ENABLED`: `"false"`.
+When your independently configured service has passed verification, set
+both environment variables before you start each desktop app. The Signal
+URL must match the URL configured on your account Worker.
 
-3. Put the Worker secrets in `apps/auth-api/.env.self-hosted`. Git ignores this file name.
+PowerShell:
 
-   ```sh
-   EMAIL_SMTP_PASSWORD=...
-   SKILLS_ADMIN_TOKEN=...
-   SITE_REPORT_HASH_SECRET=...
-   REMOTE_TICKET_PRIVATE_JWK='{"kty":"EC",...}'
-   REMOTE_TICKET_PUBLIC_JWKS='{"keys":[...]}'
-   REMOTE_AUTH_WEBHOOK_SECRET=...
-   ```
+```powershell
+$env:OPENBOT_AUTH_API_URL = "https://api.example.com"
+$env:OPENBOT_REMOTE_SIGNAL_URL = "wss://signal.example.com/v1/signal"
+# Start the OpenBotFR executable from the location you installed it.
+```
 
-4. Deploy. The script puts the secrets, applies the D1 migrations, builds and deploys the Worker:
+POSIX shell:
 
-   ```sh
-   bunx dotenvx run -f .env.self-hosted -- bun ../../scripts/deploy-auth-api.ts
-   ```
+```sh
+export OPENBOT_AUTH_API_URL=https://api.example.com
+export OPENBOT_REMOTE_SIGNAL_URL=wss://signal.example.com/v1/signal
+# Start the OpenBotFR executable from the location you installed it.
+```
 
-5. Check the service. Each command must return `200`:
+`OPENBOT_AUTH_API_URL` must use HTTPS, or HTTP on a loopback address.
+`OPENBOT_REMOTE_SIGNAL_URL` must use WSS without user information, and
+requires `OPENBOT_AUTH_API_URL`. The app refuses invalid values. On a
+remote connection, enter the email code from your own SMTP service.
 
-   ```sh
-   curl -fsS https://api.example.com/health/live
-   curl -fsS https://api.example.com/.well-known/jwks.json
-   ```
+## Point a mobile app to your service
 
-## 3. Start Signal and TURN
+Set `EXPO_PUBLIC_OPENBOT_API_URL=https://api.example.com` before you create
+the OpenBotFR mobile JavaScript bundle. The value must be an HTTPS origin,
+or HTTP on a private-network development host. If this value is absent or
+invalid, the email sign-in option is hidden. No upstream account service is
+used as a default. A QR code can still name its own account service and host;
+its host binding is checked when the phone connects. Existing saved sessions
+continue to use their stored service address.
 
-1. Copy `remote/.env.example` to `remote/.env.self-hosted` and set these values:
-   - `SIGNAL_DOMAIN`, `TURN_DOMAIN`, `TURN_PUBLIC_IP`, `ACME_EMAIL`.
-   - `CLOUDFLARE_DNS_API_TOKEN`: a token with DNS edit access to your zone, for the certificates.
-   - `REMOTE_TICKET_JWKS_URL`: `https://api.example.com/.well-known/jwks.json`.
-   - `REMOTE_CONTROL_PLANE_URL`: `https://api.example.com`.
-   - The Signal secrets from step 1.
-   - Leave `SLACK_SIGNING_SECRET`, `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATION_ID` and the `TELEGRAM_*` values empty.
+The mobile remote flow still needs a compatible account API and Signal, and
+may need TURN. A phone-only local session without these services is not
+implemented. The code path for a custom mobile account API was reviewed, but
+mobile end-to-end tests have not run for this fork. See
+[mobile configuration](../apps/mobile/README.md#optional-account-service).
 
-   If a reverse proxy already uses port 443, also set the values in
-   [the reverse proxy notes](../remote/README.md#production-requirements).
+The upstream browser client at `openbot.run/app` is not an OpenBotFR remote
+client. The upstream release and Docker artifacts are not OpenBotFR packages.
+Verify desktop-to-desktop access first.
 
-2. Start the services and check Signal:
+## Data, changes, and recovery
 
-   ```sh
-   docker compose -f remote/compose.yaml --env-file remote/.env.self-hosted up -d --build
-   curl -fsS https://signal.example.com/health/ready
-   ```
-
-## 4. Start the app
-
-Do these steps on each computer that hosts or connects.
-
-1. If you signed in to `openbot.run` before, sign out in the app. Otherwise the app sends the old
-   session token to your service.
-2. Quit the app. Then start it with the two variables. `OPENBOT_REMOTE_SIGNAL_URL` must be equal to
-   the `REMOTE_SIGNAL_URL` of your Worker.
-
-   macOS:
-
-   ```sh
-   OPENBOT_AUTH_API_URL=https://api.example.com \
-   OPENBOT_REMOTE_SIGNAL_URL=wss://signal.example.com/v1/signal \
-   /Applications/OpenBot.app/Contents/MacOS/OpenBot
-   ```
-
-   Linux:
-
-   ```sh
-   OPENBOT_AUTH_API_URL=https://api.example.com \
-   OPENBOT_REMOTE_SIGNAL_URL=wss://signal.example.com/v1/signal \
-   ./OpenBot-<version>-x86_64.AppImage
-   ```
-
-   Windows (PowerShell):
-
-   ```powershell
-   $env:OPENBOT_AUTH_API_URL = "https://api.example.com"
-   $env:OPENBOT_REMOTE_SIGNAL_URL = "wss://signal.example.com/v1/signal"
-   & "$env:LOCALAPPDATA\Programs\OpenBot\OpenBot.exe"
-   ```
-
-   This is the default install folder. If you chose a different folder in the installer, use it.
-
-3. Sign in with an email address. The code comes from your SMTP account.
-4. To connect an iPhone, scan the connection QR code from the desktop app. The phone then uses the
-   service of that desktop. Email sign-in on the phone always uses `openbot.run`, so it cannot
-   connect to a self-hosted service.
-
-Set the variables each time that you start the app. Without them, the app uses `openbot.run` and
-sends your session token there. To go back to `openbot.run`, sign out first.
-
-The app does not start, and shows an error, if `OPENBOT_REMOTE_SIGNAL_URL` is not a `wss:` URL, has
-a user name or password, or is set without `OPENBOT_AUTH_API_URL`.
-
-## Updates
-
-After each OpenBot update, pull the same release, keep your `wrangler.jsonc` changes and deploy the
-Worker again. The deploy applies the new D1 migrations. Then rebuild Signal with the same
-`docker compose` command.
+The host remains the source of truth for agent workspaces, conversations,
+and attachments. Back up its local data before you change a service. Do not
+assume that a remote account database can restore local workspaces.
+Keep the account service, Signal, and clients on compatible versions and
+preserve existing account and ticket keys across updates. D1 migration and
+production deployment require a separate review because they can affect
+remote users and stored access data.

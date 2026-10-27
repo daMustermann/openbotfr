@@ -11,9 +11,10 @@ import type { SkillMarketplaceFailure } from "./skill-marketplace-service";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
-  agentTemplateShareOrigin,
   createAgentTemplateShareUrl,
+  createOpenBotAgentTemplateUrl,
   isAgentTemplateId,
+  isAgentTemplateShareOrigin,
 } from "@openbot/contracts/agent-template-links";
 import { INPUT_LIMITS } from "@openbot/contracts/input-limits";
 import {
@@ -396,12 +397,14 @@ export class AgentTemplateService {
     });
   }
 
-  /** A share link on the Worker this app uses, so a development publish opens the local page. */
+  /** Share local Worker pages directly; a private account service opens through the app. */
   private publication(owned: OwnedTemplate): AgentTemplatePublication {
-    const origin = agentTemplateShareOrigin(new URL(this.auth.resolveApiUrl("/")).origin);
+    const apiOrigin = new URL(this.auth.resolveApiUrl("/")).origin;
     return {
       templateId: owned.id,
-      shareUrl: createAgentTemplateShareUrl(owned.id, origin),
+      shareUrl: isAgentTemplateShareOrigin(apiOrigin)
+        ? createAgentTemplateShareUrl(owned.id, apiOrigin)
+        : createOpenBotAgentTemplateUrl(owned.id),
       publishedAt: owned.updatedAt,
     };
   }

@@ -1,5 +1,4 @@
 import type { BillingPlanId } from "@openbot/contracts/billing";
-import { OPENBOT_LINKS } from "../lib/landing-links";
 
 // HTML and plain-text bodies for account email. Mail clients render HTML very differently, so the
 // markup keeps to what all of them share:
@@ -46,15 +45,9 @@ export interface WelcomeEmailInput {
   serverName: string;
 }
 
-const SITE_URL = "https://openbot.run";
-const WEB_APP_URL = `${SITE_URL}/app`;
+const SITE_URL = "https://github.com/daMustermann/openbotfr";
 const PLAN_NAMES: Record<BillingPlanId, string> = { starter: "Starter", standard: "Standard", pro: "Pro" };
-const LOGO_URL = `${SITE_URL}/icon-192x192.png`;
-const FOOTER_LINKS = [
-  { label: "openbot.run", href: SITE_URL },
-  { label: "X", href: OPENBOT_LINKS.x },
-  { label: "GitHub", href: OPENBOT_LINKS.repository },
-] as const;
+const FOOTER_LINKS = [{ label: "OpenBotFR source code", href: SITE_URL }] as const;
 const FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, Helvetica, Arial, sans-serif";
 const MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
 // Filler after the preheader, so a client's inbox preview does not continue into the body text.
@@ -75,14 +68,14 @@ const COLOR = {
 
 export function renderSignInCodeEmail(input: SignInCodeEmailInput): RenderedEmail {
   const minutes = `${input.expiresInMinutes} minute${input.expiresInMinutes === 1 ? "" : "s"}`;
-  const subject = "Your OpenBot sign-in code";
-  const preheader = `${input.code} is your OpenBot sign-in code. It expires in ${minutes}.`;
+  const subject = "Your OpenBotFR sign-in code";
+  const preheader = `${input.code} is your OpenBotFR sign-in code. It expires in ${minutes}.`;
   const footer = "If you did not request this code, you can ignore this email. Nobody can sign in without it.";
   return {
     subject,
     preheader,
     text: textBody(
-      ["Use this code to sign in to OpenBot:", "", input.code, "", `This code expires in ${minutes} and works once.`],
+      ["Use this code to sign in to OpenBotFR:", "", input.code, "", `This code expires in ${minutes} and works once.`],
       footer,
     ),
     html: renderLayout({
@@ -90,7 +83,7 @@ export function renderSignInCodeEmail(input: SignInCodeEmailInput): RenderedEmai
       preheader,
       body: [
         heading("Your sign-in code"),
-        paragraph("Enter this code in OpenBot to finish signing in."),
+        paragraph("Enter this code in OpenBotFR to finish signing in."),
         codeBlock(input.code),
         paragraph(`The code expires in ${minutes} and works once.`, { muted: true, last: true }),
       ].join(""),
@@ -102,7 +95,7 @@ export function renderSignInCodeEmail(input: SignInCodeEmailInput): RenderedEmai
 export function renderTeamInviteEmail(input: TeamInviteEmailInput): RenderedEmail {
   const serverName = input.serverName.trim();
   const access = input.role === "admin" ? "Admin" : "Member";
-  const subject = `Join ${serverName} on OpenBot`;
+  const subject = `Join ${serverName} on OpenBotFR`;
   const preheader = `${input.inviterEmail} invited you to join ${serverName}.`;
   const footer = "If you did not expect this invitation, you can ignore this email.";
   return {
@@ -110,7 +103,7 @@ export function renderTeamInviteEmail(input: TeamInviteEmailInput): RenderedEmai
     preheader,
     text: textBody(
       [
-        `${input.inviterEmail} invited you to join ${serverName} on OpenBot.`,
+        `${input.inviterEmail} invited you to join ${serverName} on OpenBotFR.`,
         "",
         `Access: ${access}`,
         "",
@@ -127,7 +120,7 @@ export function renderTeamInviteEmail(input: TeamInviteEmailInput): RenderedEmai
       body: [
         heading(`Join ${escapeHtml(serverName)}`),
         paragraph(
-          `<strong style="color:${COLOR.text};font-weight:600;">${escapeHtml(input.inviterEmail)}</strong> invited you to a team on OpenBot.`,
+          `<strong style="color:${COLOR.text};font-weight:600;">${escapeHtml(input.inviterEmail)}</strong> invited you to a team on OpenBotFR.`,
         ),
         detailRow("Access", access),
         button("Accept invitation", input.inviteUrl),
@@ -148,7 +141,7 @@ export function renderContactMessageEmail(input: ContactMessageEmailInput): Rend
   const fullSubject = `${input.topic} from ${input.name ?? input.email}`;
   const subject = fullSubject.length > 150 ? `${fullSubject.slice(0, 149)}…` : fullSubject;
   const preheader = input.message.slice(0, 120);
-  const footer = `Sent from the contact form on openbot.run. Reply to this email to answer ${input.email}.`;
+  const footer = `Sent from the OpenBotFR contact form. Reply to this email to answer ${input.email}.`;
   return {
     subject,
     preheader,
@@ -176,37 +169,25 @@ export function renderContactMessageEmail(input: ContactMessageEmailInput): Rend
   };
 }
 
-// Sent once to an account, when its first plan starts. Kamil signs it, and a reply goes to the
-// sending mailbox.
+// Sent once to an account when its first plan starts. Replies go to the sending mailbox.
 export function renderWelcomeEmail(input: WelcomeEmailInput): RenderedEmail {
   const serverName = input.serverName.trim();
   const planName = PLAN_NAMES[input.plan];
-  const subject = "Welcome to OpenBot!";
-  const thanks = "Thank you for choosing OpenBot to build and run your AI Coworkers.";
-  const reachOut =
-    "I just wanted to personally say hello and let you know that if you run into any issues or have any feedback or suggestions - feel free to reach out to me directly by replying to this email.";
-  const feedback =
-    "Every piece of feedback is incredibly valuable to us, especially as we’re still at an early stage and continuously improving the product.";
-  const footer = "You receive this email because you started an OpenBot subscription.";
+  const subject = "Welcome to OpenBotFR!";
+  const thanks = "Your OpenBotFR account is ready.";
+  const footer = "You receive this email because an OpenBotFR plan was started for your account.";
   return {
     subject,
     preheader: thanks,
     text: textBody(
       [
         "Hi,",
-        "Welcome to OpenBot!",
+        "Welcome to OpenBotFR!",
         thanks,
         "",
         `Plan: ${planName}`,
         `Server: ${serverName}`,
-        `Open your server: ${WEB_APP_URL}`,
-        "",
-        reachOut,
-        "",
-        feedback,
-        "",
-        "Best,",
-        "Kamil",
+        "Open your server using the address of your own account service.",
       ],
       footer,
     ),
@@ -214,17 +195,14 @@ export function renderWelcomeEmail(input: WelcomeEmailInput): RenderedEmail {
       title: subject,
       preheader: thanks,
       body: [
-        heading("Welcome to OpenBot!", { gap: 16 }),
+        heading("Welcome to OpenBotFR!", { gap: 16 }),
         paragraph("Hi,", { gap: 16 }),
         paragraph(thanks, { gap: 16 }),
         detailRows([
           ["Plan", planName],
           ["Server", serverName],
         ]),
-        button("Open your server", WEB_APP_URL),
-        paragraph(reachOut, { gap: 16 }),
-        paragraph(feedback, { gap: 24 }),
-        paragraph("Best,<br>Kamil", { last: true }),
+        paragraph("Open your server using the address of your own account service.", { last: true }),
       ].join(""),
       footer,
     }),
@@ -238,10 +216,8 @@ function textBody(lines: string[], footer: string): string {
     footer,
     "",
     "-- ",
-    `OpenBot · ${SITE_URL}`,
-    FOOTER_LINKS.slice(1)
-      .map((link) => `${link.label}: ${link.href}`)
-      .join(" · "),
+    `OpenBotFR · ${SITE_URL}`,
+    FOOTER_LINKS.map((link) => `${link.label}: ${link.href}`).join(" · "),
   ].join("\r\n");
 }
 
@@ -303,9 +279,7 @@ function renderLayout(input: LayoutInput): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;margin:0 auto;">
         <tr>
           <td style="padding:0 4px 20px;">
-            <a href="${SITE_URL}" style="text-decoration:none;">
-              <img src="${LOGO_URL}" width="32" height="32" alt="OpenBot" style="display:block;border:0;outline:none;border-radius:8px;font-family:${FONT_STACK};font-size:15px;font-weight:600;line-height:32px;color:${COLOR.text};">
-            </a>
+            <a href="${SITE_URL}" style="font-family:${FONT_STACK};font-size:20px;line-height:32px;font-weight:600;color:${COLOR.text};text-decoration:none;">OpenBotFR</a>
           </td>
         </tr>
         <tr>

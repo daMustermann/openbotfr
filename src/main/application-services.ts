@@ -1,6 +1,4 @@
 import { isManagedRuntimeProvider } from "@openbot/contracts/agent-providers";
-import { ANALYTICS_GENERATIONS, openPanelTransport, ReportQueue } from "@openbot/telemetry";
-import { fileReportStorage } from "@openbot/telemetry/node";
 import { Effect, Fiber } from "effect";
 import { toAgentRemovalFailed } from "../backend/agent/agent-removal";
 import { toHostedSiteOperationFailed } from "../backend/agent/hosted-site-coordinator";
@@ -296,14 +294,7 @@ import type { TeardownRegistry } from "./teardown-registry";
 import { TraceFile } from "./trace-file";
 import { readUpdatePreference, writeUpdatePreference } from "./update-preference-store";
 import { checkRestartReadiness, type RestartReadiness } from "./update-readiness";
-import {
-  createDisabledUpdateAdapter,
-  isNixStoreInstall,
-  isValidSemver,
-  supportsInstalledUpdates,
-  type UpdateAdapter,
-  UpdateService,
-} from "./update-service";
+import { createDisabledUpdateAdapter, isValidSemver, type UpdateAdapter, UpdateService } from "./update-service";
 import { listSiblingOpenBotInstances } from "./update-sibling-instances";
 import { VaultService } from "./vault-service";
 import { VaultStore } from "./vault-store";
@@ -914,10 +905,7 @@ export async function createApplicationServices({
       }),
   });
   teardown.push(TEARDOWN_ORDER.dynamicIsland, "the Dynamic Island", () => dynamicIsland.destroy());
-  const centralAuthApiUrl = readCentralAuthApiUrl(
-    process.env.OPENBOT_AUTH_API_URL,
-    app.isPackaged ? "https://api.openbot.run" : "http://127.0.0.1:3100",
-  );
+  const centralAuthApiUrl = readCentralAuthApiUrl(process.env.OPENBOT_AUTH_API_URL, "http://127.0.0.1:3100");
   const centralAuth = new CentralAuthManager({
     apiUrl: centralAuthApiUrl,
     mobileConnectApiUrl: readMobileConnectApiUrl(process.env.OPENBOT_MOBILE_AUTH_API_URL, centralAuthApiUrl),
@@ -2467,23 +2455,8 @@ export async function createApplicationServices({
         : resolve(__dirname, "../../resources/plugin-catalog"),
     ),
   );
-  const analyticsEnabled = (app.isPackaged && appVariant === "production") || analyticsCaptureUrl !== null;
-  const failureReports = analyticsEnabled
-    ? new ReportQueue(
-        fileReportStorage(join(app.getPath("userData"), "openbot-error-reports-v1.json")),
-        openPanelTransport({
-          clientId: "6c989975-87ef-4f0c-857e-ab449a65b5c2",
-          origin: "openbot-app://app",
-          ...(analyticsCaptureUrl ? { endpoint: `${analyticsCaptureUrl}/track` } : {}),
-        }),
-        {
-          surface: "desktop_host",
-          app_version: app.getVersion(),
-          platform: analyticsPlatform,
-          event_schema_version: ANALYTICS_GENERATIONS.desktop_host,
-        },
-      )
-    : undefined;
+  // OpenBotFR does not send usage events or error reports, even when capture URLs are set.
+  const analyticsEnabled = false;
   const trace = new TraceFile({ directory: join(app.getPath("userData"), "logs") });
   teardown.push(TEARDOWN_ORDER.trace, "the trace file", () => Effect.runPromise(trace.close()));
   const resourceMonitor = new ResourceMonitor({
@@ -2498,7 +2471,6 @@ export async function createApplicationServices({
   );
   service.on("event", (event) => resourceMonitor.observeAgentEvent(event));
   const analytics = new HostAnalytics({
-    ...(failureReports ? { reports: failureReports } : {}),
     enabled: analyticsEnabled,
     ...(analyticsCaptureUrl ? { apiUrl: analyticsCaptureUrl } : {}),
     trackingEnabled: analyticsPreference.enabled,
@@ -2720,11 +2692,8 @@ export async function createApplicationServices({
       process.platform === "linux" &&
       (process.env.OPENBOT_HOSTED_SERVER === "1" || installationMode === "self") &&
       existsSync(HOSTED_UPDATE_TRIGGER));
-  const updatesEnabled =
-    app.isPackaged &&
-    !isNixStoreInstall() &&
-    (hostedInstaller || (supportsInstalledUpdates(process.platform) && updateMetadataAvailable)) &&
-    isValidSemver(currentVersion);
+  // The upstream installer must not replace OpenBotFR with an OpenBot release.
+  const updatesEnabled = false;
   if (app.isPackaged && updateMetadataAvailable && !isValidSemver(currentVersion)) {
     logger.warn(`OpenBot updates are disabled because the application version is not valid SemVer: ${currentVersion}`);
   }

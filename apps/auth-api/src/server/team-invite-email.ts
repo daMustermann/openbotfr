@@ -29,10 +29,11 @@ export const sendTeamInviteEmail = Effect.fn("TeamInviteEmail.send")(function* (
   user: Pick<AuthUser, "id" | "email">,
   input: DynamicRecord,
   sourceIp: string,
+  configuredOrigin: string | undefined,
 ) {
   const invalid = () => new AuthServiceError(400, "invalid_invitation", "The invitation details are invalid.");
   const body = yield* Schema.decodeUnknownEffect(Invitation)(input).pipe(Effect.mapError(invalid));
-  const link = inviteLink(body.inviteUrl);
+  const link = inviteLink(body.inviteUrl, configuredOrigin);
   if (!link) return yield* invalid();
   const email = yield* Effect.try({
     try: () => normalizeEmail(body.email),
@@ -66,6 +67,7 @@ export const sendTeamInviteEmail = Effect.fn("TeamInviteEmail.send")(function* (
       // The email subject is one line. The host registration does not reject line breaks in the name.
       serverName: invite.hostName.replace(/[\r\n]+/gu, " "),
       inviteUrl: body.inviteUrl,
+      selfHostedApiOrigin: configuredOrigin,
       role: body.role,
     })
     .pipe(
@@ -79,10 +81,13 @@ export const sendTeamInviteEmail = Effect.fn("TeamInviteEmail.send")(function* (
 
 /** The bearer and cookie routes share the same invitation workflow. */
 
-function inviteLink(value: string): InviteLinkPayload | null {
+function inviteLink(value: string, configuredOrigin: string | undefined): InviteLinkPayload | null {
   if (value.length > 4_096 || /[\r\n]/u.test(value)) return null;
   try {
-    return isCanonicalInviteUrl(value) ? parseInviteUrl(value) : null;
+    if (!configuredOrigin && isCanonicalInviteUrl(value)) return parseInviteUrl(value);
+    if (!configuredOrigin || new URL(value).protocol !== "openbot:") return null;
+    const link = parseInviteUrl(value, { selfHostedApiOrigin: configuredOrigin });
+    return new URL(link.apiUrl).origin === configuredOrigin ? link : null;
   } catch {
     return null;
   }

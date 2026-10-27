@@ -66,8 +66,13 @@ export class HostReleaseService {
 
   constructor(options: HostReleaseOptions) {
     this.#options = options;
+    // Never contact the upstream release feed unless explicitly requested for compatibility work.
     this.#target =
-      options.packaged && isValidSemver(options.currentVersion) ? releaseTarget(options.platform, options.arch) : null;
+      options.environment.OPENBOTFR_USE_UPSTREAM_RELEASES === "1" &&
+      options.packaged &&
+      isValidSemver(options.currentVersion)
+        ? releaseTarget(options.platform, options.arch)
+        : null;
   }
 
   snapshot(): HostReleaseStatus {

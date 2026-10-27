@@ -10,7 +10,7 @@ export interface DownloadPlatformDetails {
   href?: string;
   id: DownloadPlatform;
   label: string;
-  status: "Available" | "Coming soon";
+  status: "Fork releases" | "Coming soon";
 }
 
 export interface PlatformNavigator {
@@ -25,7 +25,7 @@ export const DOWNLOAD_PLATFORMS: Record<DownloadPlatform, DownloadPlatformDetail
   macos: {
     id: "macos",
     label: "macOS",
-    status: "Available",
+    status: "Fork releases",
     description: "macOS 13+ · Apple silicon",
     action: "Download for macOS",
     available: true,
@@ -34,7 +34,7 @@ export const DOWNLOAD_PLATFORMS: Record<DownloadPlatform, DownloadPlatformDetail
   windows: {
     id: "windows",
     label: "Windows",
-    status: "Available",
+    status: "Fork releases",
     description: "Windows 10+ · x64",
     action: "Download for Windows",
     available: true,
@@ -43,7 +43,7 @@ export const DOWNLOAD_PLATFORMS: Record<DownloadPlatform, DownloadPlatformDetail
   linux: {
     id: "linux",
     label: "Linux",
-    status: "Available",
+    status: "Fork releases",
     description: "x64 · AppImage",
     action: "Download for Linux",
     available: true,

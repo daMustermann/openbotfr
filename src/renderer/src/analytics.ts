@@ -24,7 +24,6 @@ import {
 } from "@openbot/contracts/ipc";
 import { isBoolean, isDynamicRecord, isFunction, isNumber, isOneOf, isString } from "@openbot/contracts/runtime-values";
 import { normalizeEmailAddress } from "@openbot/contracts/validation";
-import { ANALYTICS_GENERATIONS } from "@openbot/telemetry";
 import { OpenPanelBase, type OpenPanelOptions } from "@openpanel/web";
 import { ANALYTICS_SCHEMA_VERSION, configureDesktopReports, configureErrorReports } from "./error-reports";
 import { MARKETPLACE_PLUGINS } from "./features/settings/marketplace-plugin-catalog";
@@ -721,7 +720,9 @@ const UPDATE_PHASES = new Set([
 ]);
 
 function shouldEnableDesktopAnalytics(appInfo: AppInfo, productionBuild: boolean): boolean {
-  return appInfo.analyticsCaptureUrl !== undefined || (productionBuild && appInfo.variant === "production");
+  void appInfo;
+  void productionBuild;
+  return false;
 }
 
 function sanitizeDesktopAnalyticsEvent(
@@ -883,37 +884,10 @@ class DesktopAnalytics {
    * failure reports, and the web preference controls both.
    */
   configureWeb(options: { version: string; user: AnalyticsIdentity | null; enabled: boolean }): boolean {
-    if (!this.#client && (!this.#productionBuild || window.location.origin !== "https://openbot.run")) {
-      this.#disabled = true;
-      this.#pending = [];
-      return false;
-    }
-    this.setTrackingEnabled(options.enabled);
-    if (!this.#client) {
-      try {
-        const clientOptions = { apiUrl: OPENPANEL_API_URL, clientId: OPENPANEL_CLIENT_ID };
-        const client = this.#createClient(clientOptions);
-        const anonymousClient = this.#createClient(clientOptions);
-        const globalProperties = {
-          __referrer: "",
-          surface: "web",
-          environment: "production",
-          event_schema_version: ANALYTICS_GENERATIONS.web,
-          app_version: options.version,
-          platform: "web",
-        };
-        client.setGlobalProperties(globalProperties);
-        anonymousClient.setGlobalProperties(globalProperties);
-        this.#client = client;
-        this.#anonymousClient = anonymousClient;
-        if (this.#trackingEnabled && this.#identity) this.#identifyClient(this.#identity);
-        if (this.#trackingEnabled) this.#flush();
-      } catch {
-        return false;
-      }
-    }
-    this.setUser(options.user);
-    return true;
+    void options;
+    this.#disabled = true;
+    this.#pending = [];
+    return false;
   }
 
   setUser(user: AnalyticsIdentity | null): void {

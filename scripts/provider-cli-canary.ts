@@ -3,7 +3,7 @@
 // cases on it with no account: model list, turn, cancel and a turn after it, resume in a new process,
 // and a missing session. A CLI release reaches users within an hour of
 // its publication, so a scheduled run finds a broken release before many users install it. Add the
-// version to `provider-runtime-blocklist.json` to stop the offer.
+// version to the bundled `provider-runtime-blocklist.json` to stop the offer in new builds.
 // The run uses a new home folder, so it never reads the account of the person who runs it.
 // `bun run test:provider-cli-canary [-- opencode]`. Writes .openbot-build/provider-cli-canary/report.json.
 import assert from "node:assert/strict";

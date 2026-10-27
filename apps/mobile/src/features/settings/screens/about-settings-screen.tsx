@@ -12,7 +12,8 @@ import {
 } from "@/features/settings/components/settings-content";
 import { useText } from "@/shared/lib/text";
 
-const PRODUCT_NAME = "OpenBot";
+const PRODUCT_NAME = "OpenBotFR";
+const REPOSITORY_URL = "https://github.com/daMustermann/openbotfr";
 
 export function AboutSettingsScreen() {
   const { t } = useText();
@@ -28,10 +29,10 @@ export function AboutSettingsScreen() {
   return (
     <SettingsContent>
       <SettingsSection title={t("mobile.settings.about.resources")}>
-        <SettingsRow onPress={() => open("https://openbot.run")}>
+        <SettingsRow onPress={() => open(REPOSITORY_URL)}>
           <Typography.Paragraph>{t("mobile.settings.about.website")}</Typography.Paragraph>
         </SettingsRow>
-        <SettingsRow onPress={() => open("https://github.com/nightly-labs/openbot/blob/main/PRIVACY.md")}>
+        <SettingsRow onPress={() => open(`${REPOSITORY_URL}/blob/main/PRIVACY.md`)}>
           <Typography.Paragraph>{t("mobile.settings.about.privacy")}</Typography.Paragraph>
         </SettingsRow>
         {error ? <SettingsNote>{error}</SettingsNote> : null}

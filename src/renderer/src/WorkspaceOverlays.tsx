@@ -1,4 +1,4 @@
-import type { CentralAuthUser, RoutineFields, ServerSummary } from "@openbot/contracts/ipc";
+import type { CentralAuthUser, ServerSummary } from "@openbot/contracts/ipc";
 import { BROWSER_PROFILES_CAPABILITY } from "@openbot/contracts/team-protocol/browser-profiles-v1";
 import { VAULT_CAPABILITY } from "@openbot/contracts/team-protocol/vault-v1";
 import { classifyFailure } from "@openbot/telemetry";
@@ -10,7 +10,7 @@ import { LeaveServerDialog } from "@openbot/ui/features/servers/LeaveServerDialo
 import { RestartServerDialog } from "@openbot/ui/features/servers/RestartServerDialog";
 import type { HostedSiteDeleteResult } from "@openbot/ui/features/settings/stores/hosted-sites-store";
 import { currentText } from "@openbot/ui/text";
-import { createEffect, createMemo, Loading, Show, untrack } from "solid-js";
+import { createEffect, createMemo, createSignal, Loading, Show, untrack } from "solid-js";
 import { actionToast } from "./action-toast";
 import { desktopAnalytics } from "./analytics";
 import { appPort } from "./app-port";
@@ -26,14 +26,7 @@ import { useProviderDetection } from "./features/custom-providers/provider-detec
 import type { ServerStorageOptions } from "./features/files/ServerStoragePanel";
 import { useSetup } from "./features/onboarding/onboarding-context";
 import { useRemoteDesktop } from "./features/remote-desktop/remote-desktop-context";
-import { AddServerOverlay } from "./features/servers/AddServerOverlay";
-import {
-  createdRoutines,
-  HostedServerUpsell,
-  hostedUpsellRoutineCreated,
-} from "./features/servers/hosted-server-upsell-controller";
 import { mcpToolRuntimeNote } from "./features/servers/mcp-servers";
-import { useServerActions } from "./features/servers/server-actions";
 import { remoteMcpSignIn, serverCanAdminister, serverSupportsCapability } from "./features/servers/server-capabilities";
 import { useServerSelection } from "./features/servers/server-selection";
 import { useServerSettings } from "./features/servers/server-settings";
@@ -49,11 +42,10 @@ import { createVaultStore } from "./features/vault/stores/vault-store";
 import { desktopVaultCalls, hostVaultCalls } from "./features/vault/vault-port";
 import { useWindowPage } from "./features/window/window-page-context";
 import { useGlobalSearchSources } from "./global-search-sources";
-import { RemoteDesktopWorkspace, SettingsModal } from "./lazy-views";
+import { AccountLogin, RemoteDesktopWorkspace, SettingsModal } from "./lazy-views";
 import { useNavigation } from "./navigation";
 import { usePlatform } from "./platform";
 import { useProviders } from "./providers";
-import { useTurns } from "./turns";
 import {
   ChannelCreateOverlay,
   GlobalSearchOverlay,
@@ -64,7 +56,7 @@ import {
 } from "./WorkspaceOverlayViews";
 
 interface AccountProps {
-  account: () => CentralAuthUser;
+  account: () => CentralAuthUser | null;
 }
 
 /**
@@ -96,8 +88,6 @@ export function WorkspaceOverlays(props: AccountProps) {
     <>
       <SharedAgentInstall />
       <JoinServer account={props.account} />
-      <AddServer />
-      <HostedUpsell account={props.account} />
       <LeaveServer />
       <RestartServer />
       <ServerSettings />
@@ -195,83 +185,13 @@ function JoinServer(props: AccountProps) {
     <JoinServerOverlay
       open={joinServerOpen()}
       inviteUrl={setup.pendingInviteUrl()}
-      accountEmail={props.account().email}
+      accountEmail={props.account()?.email ?? ""}
       onClose={() => {
         setJoinServerOpen(false);
         setup.setPendingInviteUrl("");
       }}
       onPreview={setup.previewInvite}
       onJoin={joinServer}
-    />
-  );
-}
-
-/** A hosted server: the plans, the payment, then the setup. */
-function AddServer() {
-  const { servers, addServerOpen, addServerEntryPoint, setAddServerOpen, setJoinServerOpen } = useServers();
-  const { select } = useServerActions();
-  const { openAppSettings } = useSettings();
-
-  return (
-    <AddServerOverlay
-      open={addServerOpen()}
-      entryPoint={addServerEntryPoint() ?? undefined}
-      calls={appPort().hostedServers}
-      servers={servers()}
-      onClose={() => setAddServerOpen(false)}
-      onOpenServer={(serverId) => {
-        setAddServerOpen(false);
-        void select(serverId);
-      }}
-      onContactUs={() => void appPort().openExternal("hosted-server-contact")}
-      onJoinWithInvite={() => {
-        setAddServerOpen(false);
-        setJoinServerOpen(true);
-      }}
-      onManageServers={() => openAppSettings(null, "hosted-servers")}
-    />
-  );
-}
-
-/**
- * The offer of a hosted server when routines depend on this computer or on the user's own remote
- * computer. A routine that an agent makes shows the offer when that agent's turn ends.
- */
-function HostedUpsell(props: AccountProps) {
-  const { activeServer, hostedServersAvailable, hostedServersLoaded, hostedServerIds, setAddServerOpen } = useServers();
-  const { activeTurns, routinesByConversation } = useTurns();
-  const platform = usePlatform();
-  // The last current list of each conversation. A list that is loading again keeps the previous one.
-  const seen = new Map<string, readonly RoutineFields[]>();
-  createEffect(routinesByConversation, (snapshots) => {
-    for (const [key, snapshot] of Object.entries(snapshots)) {
-      if (!snapshot?.current || seen.get(key) === snapshot.routines) continue;
-      const created = createdRoutines(seen.get(key), snapshot.routines);
-      seen.set(key, snapshot.routines);
-      const agentId = key.slice(key.indexOf("\0") + 1);
-      for (const routine of created) {
-        hostedUpsellRoutineCreated({ id: routine.id, name: routine.name, agentId });
-      }
-    }
-  });
-  return (
-    <HostedServerUpsell
-      accountId={props.account().id}
-      canOffer={
-        !platform.landingPreview &&
-        hostedServersAvailable() &&
-        hostedServersLoaded() &&
-        hostedServerIds().size === 0 &&
-        (activeServer()?.kind === "local" || activeServer()?.role === "owner") &&
-        activeServer()?.hosted !== true
-      }
-      serverId={activeServer()?.id ?? "local"}
-      host={activeServer()?.kind === "remote" ? { name: activeServer()?.name ?? "" } : "this-computer"}
-      busy={(agentId) => Boolean(activeTurns()[agentId])}
-      openPlans={() => setAddServerOpen(true, "upsell")}
-      track={(action, entryPoint) =>
-        desktopAnalytics.track("hosted_server_upsell", { action, entry_point: entryPoint })
-      }
     />
   );
 }
@@ -638,7 +558,6 @@ function ServerSettings() {
           onSetNotificationLevel={(level) => setServerNotificationLevel(server().id, level)}
           onCreateInvite={createServerInvite}
           license={appPort().license}
-          onContactUs={() => void appPort().openExternal("hosted-server-contact")}
           onUpdateMember={updateServerMember}
           onRemoveMember={removeServerMember}
           onRevokeInvite={revokeServerInvite}
@@ -772,9 +691,13 @@ function AppSettings(props: AccountProps) {
   const windowPage = useWindowPage();
   const platform = usePlatform();
   const auth = useAuth();
+  const [accountLoginOpen, setAccountLoginOpen] = createSignal(false);
+  createEffect(auth.signedInAccount, (account) => {
+    if (account) setAccountLoginOpen(false);
+  });
   const updates = useUpdates();
   const whatsNew = useWhatsNew();
-  const { servers, setAddServerOpen } = useServers();
+  const { servers } = useServers();
   const {
     appSettingsOpen,
     setAppSettingsOpen,
@@ -791,6 +714,17 @@ function AppSettings(props: AccountProps) {
   } = useSettings();
   return (
     <Loading>
+      <Show when={accountLoginOpen() && !props.account()}>
+        <AccountLogin
+          variant={platform.appInfo()?.variant ?? "production"}
+          state={auth.centralAuth()}
+          onRetry={auth.retryCentralAccount}
+          onRequestEmailCode={auth.requestEmailCode}
+          onVerifyEmailCode={auth.verifyEmailCode}
+          onReset={auth.retryCentralAccount}
+          onCancel={() => setAccountLoginOpen(false)}
+        />
+      </Show>
       <SettingsModal
         // The settings show only as a page of the window, so they wait for the page.
         open={appSettingsOpen() && windowPage.settingsPlacement("personal") !== undefined}
@@ -817,6 +751,7 @@ function AppSettings(props: AccountProps) {
         onRestartWhenIdle={updates.restartWhenIdle}
         onCancelIdleRestart={updates.cancelIdleRestart}
         account={props.account()}
+        onConnectAccount={platform.landingPreview ? undefined : () => setAccountLoginOpen(true)}
         onUpdateAccountName={auth.updateAccountName}
         onUpdateAccountAvatar={auth.updateAccountAvatar}
         onCreateMobileConnect={auth.createMobileConnect}
@@ -831,14 +766,6 @@ function AppSettings(props: AccountProps) {
         onListAccountSessions={auth.listAccountSessions}
         onRevokeAccountSession={auth.revokeAccountSession}
         onSignOut={platform.landingPreview ? undefined : auth.logoutCentralAccount}
-        billingApi={appPort().billing}
-        licenseApi={appPort().license}
-        onContactUs={() => void appPort().openExternal("hosted-server-contact")}
-        hostedServersApi={appPort().hostedServers}
-        onAddHostedServer={() => {
-          setAppSettingsOpen(false);
-          setAddServerOpen(true, "settings_billing");
-        }}
         onTestNotification={sendTestNotification}
         onOpenNotificationSettings={openNotificationSettings}
         restoreFocusTarget={appSettingsRestoreTarget()}

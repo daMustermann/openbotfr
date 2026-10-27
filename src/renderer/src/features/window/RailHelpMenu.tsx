@@ -16,10 +16,10 @@ const HELP_NEWS_COUNT = 3;
 export function RailHelpMenu(props: {
   version: string | null;
   onOpenWhatsNew: () => void;
-  onOpenLink: (destination: "changelog" | "guides" | "discord" | "feedback") => void;
+  onOpenLink: (destination: "changelog" | "guides" | "feedback") => void;
 }) {
   const [news, setNews] = createSignal<readonly HelpMenuNews[]>([]);
-  const openLink = (destination: "changelog" | "guides" | "discord" | "feedback") => {
+  const openLink = (destination: "changelog" | "guides" | "feedback") => {
     desktopAnalytics.track("help_link_opened", { destination });
     props.onOpenLink(destination);
   };
@@ -56,7 +56,6 @@ export function RailHelpMenu(props: {
       onOpenWhatsNew={props.onOpenWhatsNew}
       onOpenChangelog={() => openLink("changelog")}
       onOpenGuides={() => openLink("guides")}
-      onOpenDiscord={() => openLink("discord")}
       onSendFeedback={() => openLink("feedback")}
     />
   );

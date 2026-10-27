@@ -28,7 +28,7 @@ const requireUpdateMetadata = process.argv.includes("--require-update-metadata")
 const requireSignature = process.argv.includes("--require-signature");
 const appPathArgument = process.argv.slice(2).find((argument) => !argument.startsWith("--"));
 const appPath = resolve(appPathArgument ?? "dist/win-unpacked");
-const executablePath = resolve(appPath, "OpenBot.exe");
+const executablePath = resolve(appPath, "OpenBotFR.exe");
 const resourcesPath = resolve(appPath, "resources");
 const voiceRuntimePath = resolve(resourcesPath, "voice/runtime");
 const voiceRuntimeFiles = [
@@ -112,8 +112,8 @@ const versionInfo = JSON.parse(
   ),
 );
 if (!isDynamicRecord(versionInfo)) throw new Error("Windows version metadata is invalid.");
-expectEqual(versionInfo.ProductName, "OpenBot", "product name");
-expectEqual(versionInfo.FileDescription, "OpenBot", "file description");
+expectEqual(versionInfo.ProductName, "OpenBotFR", "product name");
+expectEqual(versionInfo.FileDescription, "OpenBotFR", "file description");
 if (!String(versionInfo.ProductVersion).startsWith(packageJson.version)) {
   throw new Error(
     `Unexpected product version: ${String(versionInfo.ProductVersion)} (expected ${packageJson.version})`,
@@ -174,7 +174,7 @@ await verifyLaunch(executablePath);
 
 logger.info(`Verified ${appPath}`);
 logger.info(
-  `OpenBot ${packageJson.version} · Windows x64 · metadata · GPL remote runtime · ASAR integrity · hardened fuses · launch`,
+  `OpenBotFR ${packageJson.version} · Windows x64 · metadata · GPL remote runtime · ASAR integrity · hardened fuses · launch`,
 );
 
 function expectEqual(actual: unknown, expected: unknown, label: string): void {

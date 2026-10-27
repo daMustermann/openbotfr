@@ -6,7 +6,6 @@ import { createEffect, createSignal, createStore, flush, getOwner, isDisposed, o
 import { isGlobalSearchShortcut } from "../../global-search-shortcut";
 import { useNavigation } from "../../navigation";
 import { createSimpleContext } from "../../simple-context";
-import { useAuth } from "../account/account-context";
 import { useAgentThreads } from "../agent-threads/agent-threads-context";
 import { useAgents } from "../agents/agents-context";
 import { useBrowserTabs } from "../browser/browser-context";
@@ -45,7 +44,6 @@ import { serversPort } from "./servers-port";
 const ServerScope = createSimpleContext({
   name: "Server scope",
   init: () => {
-    const { centralAuth } = useAuth();
     const { setupState } = useSetup();
     const { servers, activeServerId, initialServersReady, serverLoadRequest, serversLoaded } = useServers();
     const {
@@ -241,11 +239,7 @@ const ServerScope = createSimpleContext({
 
     onSettled(() => {
       const handleGlobalSearchShortcut = (event: KeyboardEvent) => {
-        if (
-          !isGlobalSearchShortcut(event) ||
-          centralAuth().status !== "signed_in" ||
-          setupState()?.completed !== true
-        ) {
+        if (!isGlobalSearchShortcut(event) || setupState()?.completed !== true) {
           return;
         }
         event.preventDefault();

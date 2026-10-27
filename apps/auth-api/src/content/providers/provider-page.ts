@@ -1,11 +1,11 @@
 import type { LandingIconName } from "../../components/landing/LandingIcon";
 import type { ComparisonQuestion, ComparisonSource, OpenBotPlan } from "../compare/comparison";
 
-// One provider page, as data: what OpenBot does with one coding agent it runs. The
+// One provider page, as data: what OpenBotFR does with one coding agent it runs. The
 // page draws every part from it, and the FAQ structured data is built from the same
 // questions, so the two can not disagree.
 
-/** One thing that OpenBot adds to the provider's own agent. */
+/** One thing that OpenBotFR adds to the provider's own agent. */
 export interface ProviderAdd {
   icon: LandingIconName;
   title: string;
@@ -27,9 +27,9 @@ export interface ProviderPage {
   name: string;
   /** The one-sentence answer under the title. */
   answer: string;
-  /** How OpenBot connects to the provider: the second setup step. */
+  /** How OpenBotFR connects to the provider: the second setup step. */
   connect: string;
-  /** What OpenBot adds for this provider in particular, shown before `OPENBOT_ADDS`. */
+  /** What OpenBotFR adds for this provider in particular, shown before `OPENBOT_ADDS`. */
   adds: readonly ProviderAdd[];
   /** The company that makes the provider, as in "{vendor}'s own apps". */
   vendor: string;
@@ -39,7 +39,7 @@ export interface ProviderPage {
   faq: readonly ComparisonQuestion[];
   sources: readonly ComparisonSource[];
   /**
-   * The provider's agents stay on the computer that runs OpenBot: the phone apps and team
+   * The provider's agents stay on the computer that runs OpenBotFR: the phone apps and team
    * members do not see them (`LOCAL_ONLY_PROVIDERS` in `src/main/team-api/provider-visibility.ts`).
    * The page then does not show `OPENBOT_PHONE_ADD`.
    */
@@ -52,11 +52,11 @@ export interface ProviderPage {
 export const OPENBOT_PHONE_ADD: ProviderAdd = {
   icon: "phone",
   title: "Your agents on your phone",
-  text: "The OpenBot apps for iPhone and Android connect to the computer that runs your agents, over an encrypted connection, with no VPN. Remote access needs an OpenBot account.",
+  text: "If you build the OpenBotFR mobile apps from source, they can connect to your agents through optional self-hosted account and remote services. Local desktop use needs no account.",
 };
 
 /**
- * What OpenBot adds to every provider. The claims are the same as on the compare
+ * What OpenBotFR adds to every provider. The claims are the same as on the compare
  * pages (`content/compare/claude-cowork.ts`), and come from the repository.
  */
 export const OPENBOT_ADDS: readonly ProviderAdd[] = [
@@ -74,11 +74,11 @@ export const OPENBOT_ADDS: readonly ProviderAdd[] = [
   {
     icon: "lock",
     title: "Your data on your computer",
-    text: "Workspaces, chats and files stay on the computer that runs OpenBot. The provider you choose gets the requests you send.",
+    text: "Workspaces, chats and files stay on the computer that runs OpenBotFR. The provider you choose gets the requests you send.",
   },
   {
     icon: "tag",
     title: "Use your AI plans",
-    text: "OpenBot is free for noncommercial use. Your agents use the plans you already pay for.",
+    text: "OpenBotFR is free for noncommercial use. Your agents use the plans you already pay for.",
   },
 ];

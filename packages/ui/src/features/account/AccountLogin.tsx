@@ -15,6 +15,7 @@ interface AccountLoginProps {
   onRequestEmailCode: (email: string) => Promise<void>;
   onVerifyEmailCode: (challengeId: string, code: string) => Promise<void>;
   onReset: () => Promise<void>;
+  onCancel?: () => void;
 }
 
 type PendingAction = "retry" | "send" | "check" | "verify" | "resend" | "reset";
@@ -34,7 +35,7 @@ const UNCERTAIN_EMAIL_DELIVERY_ISSUES = new Set([
   "email_delivery_unknown",
 ]);
 
-const PRODUCT_NAME = "OpenBot";
+const PRODUCT_NAME = "OpenBotFR";
 const EMAIL_PLACEHOLDER = "you@example.com";
 const EMAIL_MARKER = "\u0000";
 
@@ -627,6 +628,11 @@ export function AccountLogin(props: AccountLoginProps) {
             </Show>
           </Show>
         </section>
+        <Show when={props.onCancel}>
+          <Button variant="ghost" type="button" onClick={() => props.onCancel?.()}>
+            {t("settings.account.cancel")}
+          </Button>
+        </Show>
       </div>
     </main>
   );

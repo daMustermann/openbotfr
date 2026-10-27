@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "OpenBot",
+    "name": "OpenBotFR",
     "slug": "openbot",
     "platforms": ["ios", "android"],
     "version": "1.4.2",
@@ -12,7 +12,7 @@
       "bundleIdentifier": "run.openbot.mobile",
       "associatedDomains": ["applinks:openbot.run"],
       "infoPlist": {
-        "NSLocalNetworkUsageDescription": "Allow OpenBot to connect to your desktop during local development.",
+        "NSLocalNetworkUsageDescription": "Allow OpenBotFR to connect to your desktop during local development.",
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
         },
@@ -56,8 +56,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow OpenBot to use your camera to scan QR codes.",
-          "microphonePermission": "Allow OpenBot to use the microphone to dictate messages.",
+          "cameraPermission": "Allow OpenBotFR to use your camera to scan QR codes.",
+          "microphonePermission": "Allow OpenBotFR to use the microphone to dictate messages.",
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
         }
@@ -65,16 +65,16 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow OpenBot to access the photos you choose to share.",
-          "cameraPermission": "Allow OpenBot to use your camera to add photos.",
-          "microphonePermission": "Allow OpenBot to use the microphone to dictate messages."
+          "photosPermission": "Allow OpenBotFR to access the photos you choose to share.",
+          "cameraPermission": "Allow OpenBotFR to use your camera to add photos.",
+          "microphonePermission": "Allow OpenBotFR to use the microphone to dictate messages."
         }
       ],
       [
         "expo-media-library",
         {
-          "photosPermission": "Allow OpenBot to access the photos you choose to share.",
-          "savePhotosPermission": "Allow OpenBot to save images and videos you download from a chat to your photo library.",
+          "photosPermission": "Allow OpenBotFR to access the photos you choose to share.",
+          "savePhotosPermission": "Allow OpenBotFR to save images and videos you download from a chat to your photo library.",
           "granularPermissions": ["photo"]
         }
       ],
@@ -101,7 +101,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow OpenBot to use Face ID to unlock the app."
+          "faceIDPermission": "Allow OpenBotFR to use Face ID to unlock the app."
         }
       ],
       [
@@ -195,8 +195,8 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Allow OpenBot to use the microphone to dictate messages.",
-          "speechRecognitionPermission": "Allow OpenBot to turn your speech into message text."
+          "microphonePermission": "Allow OpenBotFR to use the microphone to dictate messages.",
+          "speechRecognitionPermission": "Allow OpenBotFR to turn your speech into message text."
         }
       ],
       [

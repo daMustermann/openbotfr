@@ -48,7 +48,6 @@ import {
   decodeEmailChallenge,
   decodeMobileConnectedDevices,
   decodeMobileConnectLinkResponse,
-  decodeRecordHealth,
   decodeRegisteredRemoteHost,
   decodeRemoteHosts,
   decodeRemoteInvitePreview,
@@ -1371,7 +1370,6 @@ export class CentralAuthManager extends EventEmitter<CentralAuthEvents> {
       logger.warn("The stored account session was not read: secure storage is unavailable.");
     }
     if (!this.#sessionToken) {
-      yield* this.#startupRequestEffect("/health/live", { method: "GET" }, decodeRecordHealth);
       return this.#setState({ status: "signed_out" });
     }
     const sessionToken = this.#sessionToken;
