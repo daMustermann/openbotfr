@@ -721,6 +721,7 @@ jobs:
           retention-days: 7
 
   linux:
+    if: github.repository == 'nightly-labs/openbot'
     name: Build unsigned Linux ${{ matrix.arch }} release
     needs: validate
     # Each architecture builds on a native runner: the launch check runs the packaged binary, and
@@ -893,6 +894,7 @@ jobs:
   # job built and checked, and starts the image once before the release publishes. This job has no
   # write token: `docker-publish` pushes the saved images after the GitHub Release exists.
   docker:
+    if: github.repository == 'nightly-labs/openbot'
     name: Build Docker image ${{ matrix.platform }}
     needs: [validate, linux]
     strategy:

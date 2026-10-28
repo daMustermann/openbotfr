@@ -8,6 +8,11 @@ The fork release does not run the upstream multi-platform tag workflow, publish 
 image, deploy an account Worker, or publish a hosted-server snapshot. The Cloudflare
 production CI job is restricted to the upstream repository.
 
+For a fork CI build, run `Release desktop` manually on `main` with `mode=dry-run`.
+Linux and Docker builds are restricted to the upstream repository. This run does not
+publish a release. Download `release-windows` after the Windows job and its package
+and update checks pass, then publish the Windows assets to the fork release.
+
 For OpenBotFR, check the Windows installer and unpacked application with
 `bun run verify:package:win` after `bun run dist:win`; check hashes for both files; publish
 the Windows artifacts, `latest.yml`, the installer `.exe.blockmap`, and `SHA256SUMS.txt`
