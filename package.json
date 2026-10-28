@@ -2,7 +2,7 @@
   "name": "openbot",
   "productName": "OpenBotFR",
   "desktopName": "openbot.desktop",
-  "version": "0.52.3",
+  "version": "0.52.4",
   "description": "OpenBot For Real: a local-first AI agent desktop workspace without a required account.",
   "author": {
     "name": "Norbert Bodziony",

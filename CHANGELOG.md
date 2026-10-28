@@ -6,6 +6,12 @@ All notable changes to OpenBot will be documented here. The project follows
 
 ## [Unreleased]
 
+## [0.52.4] - 2026-10-28
+
+### Fixed
+
+- Reduce the OpenBot tool definitions sent to Kilo Code. Built-in tools remain available through discovery.
+
 ## [0.52.3] - 2026-10-28
 
 ### Fixed
