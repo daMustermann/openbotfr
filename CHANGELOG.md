@@ -6,6 +6,12 @@ All notable changes to OpenBot will be documented here. The project follows
 
 ## [Unreleased]
 
+## [0.52.3] - 2026-10-28
+
+### Fixed
+
+- Return local skill lists as an MCP-compatible object, including when the shared skill library is empty. This fixes the invalid `structuredContent` response error when agents call `list_local_skills`.
+
 ## [0.52.2] - 2026-10-28
 
 ### Added
