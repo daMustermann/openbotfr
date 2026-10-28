@@ -87,7 +87,7 @@ jobs:
             echo "DISCORD_RELEASE_ROLE_ID is not set. See docs/RELEASING.md#discord-announcement." >&2
             exit 1
           fi
-          bun scripts/discord-release-announcement.ts check "$package_version"
+          if [[ "$GITHUB_REPOSITORY" == "nightly-labs/openbot" ]]; then bun scripts/discord-release-announcement.ts check "$package_version"; fi
           echo "version=$package_version" >> "$GITHUB_OUTPUT"
           echo "tag=v$package_version" >> "$GITHUB_OUTPUT"
 
@@ -1313,3 +1313,4 @@ jobs:
             echo "::warning::Some PR workflow runs were not approved. Approve the waiting runs on the PR so that it can merge."
           fi
           gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"
+
