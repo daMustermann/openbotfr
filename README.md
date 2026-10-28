@@ -261,6 +261,8 @@ Ask an agent to create a skill from a reusable workflow. It prepares a folder wi
 
 Agents can use `list_local_skills`, `read_local_skill`, `revise_skill`, and `install_local_skill`. Revisions require the version read by the agent and retain previous versions. Updating a library skill does not update installed copies: use the Update chip or install an exact revision. Modified installed files are protected. To publish a local skill, submit its folder separately through the marketplace.
 
+`list_local_skills` returns an object with a `skills` array (`{"skills":[]}` for an empty library), so MCP clients can read the result without a structured-content validation error.
+
 Optional scripts, references, and assets follow the Codex skill folder structure. A PNG at `assets/icon.png` supplies the local preview logo. The built-in `openbot-skill-creator` guide explains the format and validation limits. Registration does not run scripts.
 
 ## Import agents from Grok Bot

@@ -159,7 +159,7 @@ export const runLocalSkillTool = Effect.fn("SkillTools.run")(function* (
       return skill;
     }
     case "list_local_skills":
-      return (yield* api.list()).map(skillToolSummary);
+      return { skills: (yield* api.list()).map(skillToolSummary) };
     case "set_skill_enabled": {
       const input = yield* toolStep(() => setSkillEnabledSchema.parse(args));
       const target = yield* toolStep(() => targetAgent(input.agentId));
