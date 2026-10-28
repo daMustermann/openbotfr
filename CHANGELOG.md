@@ -6,6 +6,80 @@ All notable changes to OpenBot will be documented here. The project follows
 
 ## [Unreleased]
 
+## [0.52.2] - 2026-10-28
+
+### Added
+
+- Server settings › Storage shows the disk, memory and CPU use of the computer that runs the server,
+  for owners and admins. It updates each minute while it is open.
+- Set an alert level for disk, memory and CPU, and choose the owner or admin who gets the alert.
+  When the use passes a level, that person gets a notification on each of their computers, and
+  again each day while it stays above the level. A server must have this version to use it.
+- While a level is passed, owners and admins see a card at the bottom of the sidebar with the use
+  and who gets the alert. It opens Server settings › Storage.
+- A side thread shows how full its context is next to the send button, as the agent's own chat does.
+  Open it to see the details, and select Compact to compact the thread's context now. Compact shows
+  for providers that OpenBot can ask to compact, on this computer only.
+
+### Changed
+
+- The Timezone list in Server Settings has a search field. Type part of a zone, such as "new_york", or its name, such as "Eastern", then use the arrow keys and Enter to choose it.
+- Build the OpenBotFR Windows x64 installer and unpacked application. Update the packaged app verifier
+  for the OpenBotFR executable and Windows product metadata.
+- Remove the link to the upstream Discord community from the desktop Help menu and sidebar.
+- Explain the OpenBotFR local installer build, account-free desktop use,
+  optional self-hosted remote setup, and Kilo Code ACP preset. Identify the
+  legacy hosted service and telemetry limits, and remove claims about
+  published OpenBotFR releases.
+- Remove hosted-server purchase prompts from desktop and web interfaces.
+  Keep controls for existing hosted servers.
+- Require an explicit account API origin for mobile email sign-in, and keep
+  mobile QR sessions bound to the service named in their code.
+- Bundle provider version blocks locally and permit a remote HTTPS blocklist only by operator
+  configuration. Update the macOS permission dialogs to say OpenBotFR.
+- Remove upstream hosted origins from the desktop content security policy while keeping the
+  configured self-hosted Signal origin.
+- Keep the released installed profile directory when the product name changes to OpenBotFR.
+- Point public download manifests, release fallback links, and source documentation links to the
+  OpenBotFR fork and its own Windows x64 GitHub Release.
+- Skip account network requests during startup when no session is saved.
+- Describe fork desktop releases and mobile source-only status on public download pages.
+  Remove upstream social, status, and hosted-service links from public navigation.
+- Show OpenBotFR in translated desktop, mobile, and error text. Preserve released error text on the wire.
+- When an agent answer names an output file by its full path and does not attach it, OpenBot now attaches the file to the answer. This applies to images, audio, video, ZIP, PDF, office documents, CSV, text and Markdown files of 25 MB or smaller in the agent's workspace or the Shared folder. Before, the iPhone app and other devices showed only the path, and you could not open the file. Code, configuration, log and SVG files, and folders, stay as paths.
+- The "Add backup model" list in agent settings has a search field. Type part of a model name, a provider name or a model id, such as "glm" or "openrouter/qwen", then use the arrow keys and Enter to add the model.
+- On a sidebar of 300 px or less, the wait chip of a "Needs you" row shows only its icon, so that a long agent name has more space.
+- Merge upstream OpenBot changes through `2357441bb`, including provider and Vault improvements, side-thread attachments and drafts, machine monitoring, and Dutch translations.
+- Keep OpenBotFR local access, branding, disabled telemetry, optional self-hosting, and Kilo Code integration.
+- Enable Windows in-app update checks from the OpenBotFR GitHub release feed.
+
+### Fixed
+
+- Sliders, such as the Dynamic Island width and height in Settings, move again with the pointer and
+  the arrow keys. Before, they did not move.
+- OpenBot starts after an upgrade when its database has broken links between rows from an earlier
+  version. Before, the upgrade stopped at each start with "OpenBot database migration to version 47
+  failed", and the app did not open. OpenBot keeps these rows as they are, and an upgrade step stops
+  only when it breaks a link itself.
+- A custom provider on an Azure OpenAI or Azure AI Foundry v1 endpoint
+  (`https://<resource>.openai.azure.com/openai/v1`) runs agent turns in OpenCode. Before, each turn
+  failed with "Function tools with reasoning_effort are not supported".
+- The `$` list in an agent thread shows the agent's skills and MCP servers. Before, it said "This agent has no skills.", and a skill in a sent thread message showed as unavailable.
+- You can paste, drop or pick images and files in a side thread of an agent on this computer, and they go with the thread message. Before, a pasted image in a thread made a sound but went to the draft of the agent's main chat. A thread of an agent on another computer takes text only, and now says so.
+- A chat in "Needs you" shows the question or the command as its preview. Before, it showed the previous message, and the question was only in the tooltip.
+- Local conversations now load and save read status without an OpenBotFR account. Read status is kept when a local user signs in.
+- Local server names and images can be saved without an account and stay available after restart. Account-linked server settings keep their owner checks.
+- Codex receives explicit instructions to call OpenBot tools directly and stop repeated calls through an unavailable tool path.
+- Unknown tool calls no longer add generic progress lines to the conversation. Tool traces and failure messages remain available.
+- On a server that you joined, a tab that you open in an agent's browser panel opens in the agent's
+  browser profile. Before, the tab opened in the shared profile, so a sign-in there was available to
+  other agents.
+- Keep new saved data separate from records that older builds can replace.
+- Check new foreign-key violations during upgrades without deleting older broken references.
+- Protect shared provider runtime files when another app instance uses them.
+- Keep Codex local bridge WebSocket retry and orphan tool-output diagnostics in logs without repeated desktop error notices.
+- Keep vault API keys, side-thread drafts, and workflow pins in separate stores so older builds cannot remove them when they save legacy records. Read and copy the first upstream format without deleting its source.
+
 ## [0.52.1] - 2026-10-27
 
 ### Added
