@@ -129,6 +129,21 @@ export const messages = {
   "marketplace.app.setup.desktopConnected": "已连接到 {address}。",
   "marketplace.app.setup.open": "无需登录或密钥。",
   "marketplace.app.connectAgain": "再次连接",
+  "marketplace.app.automation.askOnInstall": "安装时向 macOS 请求访问权限",
+  "marketplace.app.automation.title": "Apple 应用访问权限",
+  "marketplace.app.automation.description": "macOS 会为每个应用显示一次提示。已关闭的应用会短暂打开，然后退出。",
+  "marketplace.app.automation.request": "请求访问",
+  "marketplace.app.automation.allowed": "OpenBot 现在可以控制所有 Apple 应用。",
+  "marketplace.app.automation.refused":
+    "macOS 没有授予对 {apps} 的访问权限。在系统设置 › 隐私与安全性 › 自动化中允许 OpenBot。",
+  "marketplace.app.automation.failed": "OpenBot 无法就 {apps} 询问 macOS。请重试。",
+  "marketplace.app.automation.app.calendar": "日历",
+  "marketplace.app.automation.app.contacts": "通讯录",
+  "marketplace.app.automation.app.mail": "邮件",
+  "marketplace.app.automation.app.notes": "备忘录",
+  "marketplace.app.automation.app.reminders": "提醒事项",
+  "marketplace.app.automation.app.messages": "信息",
+  "marketplace.app.automation.app.safari": "Safari",
   "marketplace.app.signInTitle": "请重新登录 {name}",
   "marketplace.app.signInDescription": "{name} 拒绝了已保存的登录。重新登录之前，你的助手无法使用它。",
 
@@ -188,7 +203,7 @@ export const messages = {
   "marketplace.plugin.paper.prompt.tokens": "列出打开的 Paper 文件中的设计 token，并与我们的主题对比。",
   "marketplace.plugin.appleApps.tagline": "Mac 上的邮件、日历等",
   "marketplace.plugin.appleApps.description":
-    "Apple apps 让助手使用这台 Mac 上的邮件、日历、通讯录、提醒事项、备忘录、信息和 Safari。它仅适用于 macOS。OpenBot 会启动 mcp-icloud，这是一个社区服务器，不是 Apple 或 OpenBot 制作的。该服务器在这台电脑上通过 AppleScript 控制这些应用，不需要账号和密钥。助手第一次使用某个应用时，macOS 会询问是否允许 OpenBot 控制它。如需之后更改，打开系统设置 › 隐私与安全性 › 自动化。助手可以发送邮件和 iMessage，并修改或删除日程、联系人和提醒事项，因此请在批准前检查每次写入。工具读取的内容（例如邮件正文）会发送给助手的模型提供商。",
+    "Apple apps 让助手使用这台 Mac 上的邮件、日历、通讯录、提醒事项、备忘录、信息和 Safari。它仅适用于 macOS。OpenBot 会启动 mcp-icloud，这是一个社区服务器，不是 Apple 或 OpenBot 制作的。该服务器在这台电脑上通过 AppleScript 控制这些应用，不需要账号和密钥。安装时，OpenBot 可以一次性向 macOS 请求访问所有这些应用，每个应用显示一次提示。如果不这样做，macOS 会在助手第一次使用某个应用时询问。如需之后更改，打开系统设置 › 隐私与安全性 › 自动化。助手可以发送邮件和 iMessage，并修改或删除日程、联系人和提醒事项，因此请在批准前检查每次写入。工具读取的内容（例如邮件正文）会发送给助手的模型提供商。",
   "marketplace.plugin.appleApps.app":
     "通过本地 mcp-icloud 服务器使用邮件、日历、通讯录、提醒事项、备忘录、信息和 Safari。需要 macOS 和自动化权限。",
   "marketplace.plugin.appleApps.prompt.unread": "总结我今天在 Apple 邮件中的未读邮件。",
@@ -340,6 +355,13 @@ export const messages = {
   "marketplace.plugin.todoist.prompt.today": "今天到期的 Todoist 任务有哪些？",
   "marketplace.plugin.todoist.prompt.capture": "把这些待办事项添加到我的 Todoist 收件箱。",
   "marketplace.plugin.todoist.prompt.overdue": "把我逾期的 Todoist 任务改到明天。",
+  "marketplace.plugin.trello.tagline": "看板、列表和卡片",
+  "marketplace.plugin.trello.description":
+    "Trello 让助手搜索和读取看板、列表、卡片、清单和评论，创建看板和卡片，移动列表和卡片，将卡片标记为完成，并添加清单、评论和标签。助手还可以读取和添加用户 Trello 收件箱中的卡片，并读取 Planner 中的日程，这些日程可能来自已连接的 Google 或 Outlook 日历。每位用户通过浏览器登录自己的 Trello 账号，并在授权页面上选择工作区。助手在这些工作区中拥有与用户相同的权限。助手可以归档卡片和列表，但服务器无法永久删除任何内容。",
+  "marketplace.plugin.trello.app": "通过 Trello 的 MCP 服务器和浏览器登录，提供看板、列表和卡片。",
+  "marketplace.plugin.trello.prompt.myCards": "哪些 Trello 卡片分配给了我？",
+  "marketplace.plugin.trello.prompt.board": "总结我的 Trello 看板上正在进行的工作。",
+  "marketplace.plugin.trello.prompt.newCards": "把这些待办事项作为卡片添加到我的 Trello 看板。",
   "marketplace.plugin.huggingface.tagline": "Hub 上的模型、数据集和论文",
   "marketplace.plugin.huggingface.description":
     "Hugging Face 让助手在 Hugging Face Hub 上搜索模型、数据集、Spaces、合集和论文，读取模型卡片和仓库文件，预览数据集，并搜索 Hugging Face 文档。它使用 Hub 的公开数据，无需账号和密钥。这些工具只读取数据：助手不能创建仓库，也不能运行任务。",

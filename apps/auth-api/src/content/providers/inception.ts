@@ -40,7 +40,6 @@ export const INCEPTION_PROVIDER: ProviderPage = {
     },
   ],
   comparisons: ["best-ai-agent-apps"],
-  localOnly: true,
   faq: [
     {
       question: "What is Mercury?",
@@ -60,7 +59,7 @@ export const INCEPTION_PROVIDER: ProviderPage = {
     {
       question: "Can I use Inception agents from my phone or share them with a team?",
       answer:
-        "No. Inception agents use the API key on your computer, so they stay on that computer. The phone apps and team members do not see them. Agents on other providers can connect to mobile apps built from source when you set up optional self-hosted remote services.",
+        "Yes, with optional self-hosted remote services and mobile apps built from source. The agent and its API key stay on the computer that runs OpenBotFR. An owner or admin can save the key in the server's provider settings. Local desktop use needs no account.",
     },
   ],
   sources: [

@@ -890,11 +890,18 @@ export function migrateOpenBotDatabase(db: DatabaseSync, options: OpenBotMigrati
   validateAppliedVersions(appliedVersions);
   const currentVersion = latestAppliedVersion(appliedVersions);
   const pending = MIGRATIONS.filter((migration) => migration.version > currentVersion);
+  // A database can hold broken references from before this upgrade. A migration that does not touch them must not
+  // stop on them, and deleting them would lose rows, so each migration is checked only for the ones it adds.
+  let violations: ForeignKeyViolations | undefined;
 
   for (const migration of pending) {
     try {
-      runMigration(db, migration, appliedAt);
+      // Read inside the try, so that a failed read names the migration that it stops, as a failed check did before.
+      violations ??= readOldForeignKeyViolations(db);
+      violations = runMigration(db, migration, appliedAt, violations);
     } catch (error) {
+      // The startup log keeps only the message, so the cause is logged here.
+      logger.error(`OpenBot database migration to version ${migration.version} failed.`, toLogValue(error));
       throw new Error(`OpenBot database migration to version ${migration.version} failed.`, {
         cause: error,
       });
@@ -986,7 +993,7 @@ function createLatestDatabase(db: DatabaseSync, appliedAt: string): void {
     db.exec(LATEST_SCHEMA_SQL);
     const insertMigration = db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)");
     for (const migration of MIGRATIONS) insertMigration.run(migration.version, appliedAt);
-    assertForeignKeys(db);
+    assertForeignKeys(db, new Map());
     db.exec("COMMIT");
   } catch (error) {
     if (db.isTransaction) db.exec("ROLLBACK");
@@ -1033,14 +1040,20 @@ function latestAppliedVersion(versions: number[]): number {
   return baselineAndLater.at(-1) ?? BASELINE_SCHEMA_VERSION - 1;
 }
 
-function runMigration(db: DatabaseSync, migration: OpenBotMigration, appliedAt: string): void {
+function runMigration(
+  db: DatabaseSync,
+  migration: OpenBotMigration,
+  appliedAt: string,
+  violationsBefore: ForeignKeyViolations,
+): ForeignKeyViolations {
   if (migration.disableForeignKeys) db.exec("PRAGMA foreign_keys = OFF");
   try {
     db.exec("BEGIN IMMEDIATE");
     migration.up(db, appliedAt);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)").run(migration.version, appliedAt);
-    assertForeignKeys(db);
+    const violations = assertForeignKeys(db, violationsBefore);
     db.exec("COMMIT");
+    return violations;
   } catch (error) {
     if (db.isTransaction) db.exec("ROLLBACK");
     throw error;
@@ -1049,11 +1062,118 @@ function runMigration(db: DatabaseSync, migration: OpenBotMigration, appliedAt: 
   }
 }
 
-function assertForeignKeys(db: DatabaseSync): void {
-  const violations = db.prepare("PRAGMA foreign_key_check").all();
-  if (violations.length > 0) {
-    throw new Error(`OpenBot database migration produced ${violations.length} foreign-key violation(s).`);
+type ForeignKeyViolations = Map<string, Map<string, number>>;
+
+function assertForeignKeys(db: DatabaseSync, before: ForeignKeyViolations): ForeignKeyViolations {
+  const violations = readForeignKeyViolations(db);
+  const added = [...violations]
+    .map(([reference, identities]) => {
+      let count = 0;
+      for (const [identity, occurrences] of identities) {
+        count += Math.max(0, occurrences - (before.get(reference)?.get(identity) ?? 0));
+      }
+      return [reference, count] as const;
+    })
+    .filter(([, count]) => count > 0);
+  if (added.length > 0) {
+    const total = added.reduce((sum, [, count]) => sum + count, 0);
+    const references = added.map(([reference]) => reference).join(", ");
+    throw new Error(`OpenBot database migration produced ${total} foreign-key violation(s) in ${references}.`);
   }
+  return violations;
+}
+
+/**
+ * A rebuild can change rowids and foreign-key ids. Match the declared primary key, reference columns and values
+ * instead. Keep identities private: diagnostics contain only table names and counts.
+ */
+function readForeignKeyViolations(db: DatabaseSync): ForeignKeyViolations {
+  const violations: ForeignKeyViolations = new Map();
+  const checked = new Set<string>();
+  for (const row of db.prepare("PRAGMA foreign_key_check").all()) {
+    if (!isString(row.table) || !isString(row.parent) || !isNumber(row.fkid)) {
+      throw new Error("Cannot identify a database foreign-key violation.");
+    }
+    const constraint = JSON.stringify([row.table, row.fkid]);
+    if (checked.has(constraint)) continue;
+    checked.add(constraint);
+    const primaryKey = foreignKeyPrimaryColumns(db, row.table);
+    const parentKey = foreignKeyPrimaryColumns(db, row.parent);
+    const columns = db
+      .prepare(`PRAGMA foreign_key_list(${quoteSqlIdentifier(row.table)})`)
+      .all()
+      .filter((column) => column.id === row.fkid)
+      .map((column) => {
+        const target = column.to ?? parentKey[Number(column.seq)];
+        if (!isString(column.from) || !isString(target)) {
+          throw new Error("Cannot identify a database foreign-key column.");
+        }
+        return { from: column.from, to: target };
+      })
+      .sort((left, right) => left.from.localeCompare(right.from));
+    if (primaryKey.length === 0 || columns.length === 0) {
+      throw new Error("Cannot identify a database foreign-key violation.");
+    }
+    const selected = [...new Set([...primaryKey, ...columns.map((column) => column.from)])];
+    // Unary + removes the child's affinity, so the parent column controls conversion and collation as in SQLite's
+    // foreign-key comparison. A null component exempts the whole reference, including a composite reference.
+    const matches = columns
+      .map((column) => `parent.${quoteSqlIdentifier(column.to)} = +child.${quoteSqlIdentifier(column.from)}`)
+      .join(" AND ");
+    const statement = db.prepare(`SELECT ${selected.map((column) => `child.${quoteSqlIdentifier(column)}`).join(", ")}
+      FROM ${quoteSqlIdentifier(row.table)} AS child
+      WHERE ${columns.map((column) => `child.${quoteSqlIdentifier(column.from)} IS NOT NULL`).join(" AND ")}
+        AND NOT EXISTS (SELECT 1 FROM ${quoteSqlIdentifier(row.parent)} AS parent
+          WHERE ${matches})`);
+    statement.setReadBigInts(true);
+    const brokenRows = statement.all();
+    if (brokenRows.length === 0) throw new Error("Cannot identify a database foreign-key violation.");
+    const reference = `${row.table} -> ${row.parent}`;
+    const identities = violations.get(reference) ?? new Map<string, number>();
+    for (const child of brokenRows) {
+      const identity = JSON.stringify(
+        [
+          primaryKey.map((column) => [column, child[column]]),
+          columns.map((column) => [column.from, column.to, child[column.from]]),
+        ],
+        (_key, value) => {
+          if (typeof value === "bigint") return { integer: value.toString() };
+          if (value instanceof Uint8Array) return { blob: Buffer.from(value).toString("hex") };
+          return value;
+        },
+      );
+      identities.set(identity, (identities.get(identity) ?? 0) + 1);
+    }
+    violations.set(reference, identities);
+  }
+  return violations;
+}
+
+function foreignKeyPrimaryColumns(db: DatabaseSync, table: string): string[] {
+  return db
+    .prepare(`PRAGMA table_info(${quoteSqlIdentifier(table)})`)
+    .all()
+    .filter((column) => Number(column.pk) > 0)
+    .sort((left, right) => Number(left.pk) - Number(right.pk))
+    .map((column) => {
+      if (!isString(column.name)) throw new Error("Cannot identify a database primary-key column.");
+      return column.name;
+    });
+}
+
+function readOldForeignKeyViolations(db: DatabaseSync): ForeignKeyViolations {
+  const violations = readForeignKeyViolations(db);
+  if (violations.size > 0) {
+    logger.warn("The OpenBot database has foreign-key violations from before this upgrade. They stay as they are.", {
+      violations: Object.fromEntries(
+        [...violations].map(([reference, identities]) => [
+          reference,
+          [...identities.values()].reduce((sum, count) => sum + count, 0),
+        ]),
+      ),
+    });
+  }
+  return violations;
 }
 
 function assertQuickCheck(db: DatabaseSync): void {

@@ -116,6 +116,22 @@ export const messages = {
   "marketplace.app.setup.desktopConnected": "Conectado a {address}.",
   "marketplace.app.setup.open": "Não precisa de login nem de chave.",
   "marketplace.app.connectAgain": "Conectar de novo",
+  "marketplace.app.automation.askOnInstall": "Pedir acesso ao macOS na instalação",
+  "marketplace.app.automation.title": "Acesso aos apps da Apple",
+  "marketplace.app.automation.description":
+    "O macOS mostra um pedido para cada app. Um app fechado abre por um momento e depois fecha.",
+  "marketplace.app.automation.request": "Pedir acesso",
+  "marketplace.app.automation.allowed": "Agora o OpenBot pode controlar todos os apps da Apple.",
+  "marketplace.app.automation.refused":
+    "O macOS não deu acesso a {apps}. Permita o OpenBot em Ajustes do Sistema › Privacidade e Segurança › Automação.",
+  "marketplace.app.automation.failed": "O OpenBot não conseguiu perguntar ao macOS sobre {apps}. Tente de novo.",
+  "marketplace.app.automation.app.calendar": "Calendário",
+  "marketplace.app.automation.app.contacts": "Contatos",
+  "marketplace.app.automation.app.mail": "Mail",
+  "marketplace.app.automation.app.notes": "Notas",
+  "marketplace.app.automation.app.reminders": "Lembretes",
+  "marketplace.app.automation.app.messages": "Mensagens",
+  "marketplace.app.automation.app.safari": "Safari",
   "marketplace.app.signInTitle": "Entre de novo no {name}",
   "marketplace.app.signInDescription":
     "{name} recusou o login salvo. Seus agentes não podem usá-lo até você entrar de novo.",
@@ -187,7 +203,7 @@ export const messages = {
   "marketplace.plugin.paper.prompt.tokens": "Liste os design tokens do arquivo Paper aberto e compare com nosso tema.",
   "marketplace.plugin.appleApps.tagline": "Mail, Calendário e mais no seu Mac",
   "marketplace.plugin.appleApps.description":
-    "Apple apps permite que agentes usem Mail, Calendário, Contatos, Lembretes, Notas, Mensagens e Safari neste Mac. Funciona somente no macOS. O OpenBot inicia o mcp-icloud, um servidor da comunidade que não é feito pela Apple nem pelo OpenBot. O servidor controla os apps com AppleScript, neste computador, e não precisa de conta nem de chave. Na primeira vez que um agente usa um app, o macOS pergunta se o OpenBot pode controlá-lo. Para mudar isso depois, abra Ajustes do Sistema › Privacidade e Segurança › Automação. Os agentes podem enviar e-mails e iMessages, e alterar ou excluir eventos, contatos e lembretes, então revise cada gravação antes de aprová-la. O que as ferramentas leem, como o texto dos e-mails, vai para o provedor do modelo do agente.",
+    "Apple apps permite que agentes usem Mail, Calendário, Contatos, Lembretes, Notas, Mensagens e Safari neste Mac. Funciona somente no macOS. O OpenBot inicia o mcp-icloud, um servidor da comunidade que não é feito pela Apple nem pelo OpenBot. O servidor controla os apps com AppleScript, neste computador, e não precisa de conta nem de chave. Na instalação, o OpenBot pode pedir ao macOS acesso a todos esses apps de uma vez, com um pedido para cada app. Se você não fizer isso, o macOS pergunta na primeira vez que um agente usa um app. Para mudar isso depois, abra Ajustes do Sistema › Privacidade e Segurança › Automação. Os agentes podem enviar e-mails e iMessages, e alterar ou excluir eventos, contatos e lembretes, então revise cada gravação antes de aprová-la. O que as ferramentas leem, como o texto dos e-mails, vai para o provedor do modelo do agente.",
   "marketplace.plugin.appleApps.app":
     "Mail, Calendário, Contatos, Lembretes, Notas, Mensagens e Safari, pelo servidor local mcp-icloud. Requer macOS e acesso em Automação.",
   "marketplace.plugin.appleApps.prompt.unread": "Resuma meus e-mails não lidos de hoje no Apple Mail.",
@@ -364,6 +380,13 @@ export const messages = {
   "marketplace.plugin.todoist.prompt.today": "Quais tarefas do Todoist vencem hoje?",
   "marketplace.plugin.todoist.prompt.capture": "Adicione estes itens de ação à minha Caixa de Entrada do Todoist.",
   "marketplace.plugin.todoist.prompt.overdue": "Mova minhas tarefas atrasadas do Todoist para amanhã.",
+  "marketplace.plugin.trello.tagline": "Quadros, listas e cartões",
+  "marketplace.plugin.trello.description":
+    "O Trello permite que os agentes pesquisem e leiam quadros, listas, cartões, checklists e comentários, criem quadros e cartões, movam listas e cartões, marquem cartões como concluídos e adicionem checklists, comentários e etiquetas. Os agentes também podem ler e adicionar cartões na Caixa de Entrada do Trello do usuário e ler eventos do Planner, que podem vir de um calendário Google ou Outlook conectado. Cada usuário entra na própria conta do Trello pelo navegador e escolhe as áreas de trabalho em uma tela de consentimento. Os agentes têm as mesmas permissões que o usuário nessas áreas de trabalho. Eles podem arquivar cartões e listas, mas o servidor não pode excluir nada de forma permanente.",
+  "marketplace.plugin.trello.app": "Quadros, listas e cartões, pelo servidor MCP do Trello com login no navegador.",
+  "marketplace.plugin.trello.prompt.myCards": "Quais cartões do Trello estão atribuídos a mim?",
+  "marketplace.plugin.trello.prompt.board": "Resuma o que está em andamento no meu quadro do Trello.",
+  "marketplace.plugin.trello.prompt.newCards": "Adicione estes itens de ação como cartões ao meu quadro do Trello.",
   "marketplace.plugin.huggingface.tagline": "Modelos, datasets e artigos no Hub",
   "marketplace.plugin.huggingface.description":
     "O Hugging Face permite que agentes pesquisem modelos, datasets, Spaces, coleções e artigos no Hugging Face Hub, leiam model cards e arquivos de repositórios, vejam uma prévia de datasets e pesquisem na documentação do Hugging Face. Ele usa dados públicos do Hub e não precisa de conta nem de chave. As ferramentas apenas leem: os agentes não podem criar repositórios nem executar jobs.",

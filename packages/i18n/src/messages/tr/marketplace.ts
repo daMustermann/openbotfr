@@ -142,6 +142,22 @@ export const messages = {
   "marketplace.app.setup.desktopConnected": "{address} adresine bağlı.",
   "marketplace.app.setup.open": "Oturum açma veya anahtar gerekmez.",
   "marketplace.app.connectAgain": "Tekrar bağlan",
+  "marketplace.app.automation.askOnInstall": "Yüklerken macOS'ten erişim iste",
+  "marketplace.app.automation.title": "Apple uygulamalarına erişim",
+  "marketplace.app.automation.description":
+    "macOS her uygulama için bir istem gösterir. Kapalı bir uygulama kısa bir süre açılır, sonra kapanır.",
+  "marketplace.app.automation.request": "Erişim iste",
+  "marketplace.app.automation.allowed": "OpenBot artık tüm Apple uygulamalarını kontrol edebilir.",
+  "marketplace.app.automation.refused":
+    "macOS şu uygulamalara erişim vermedi: {apps}. Sistem Ayarları › Gizlilik ve Güvenlik › Otomasyon'da OpenBot'a izin verin.",
+  "marketplace.app.automation.failed": "OpenBot, şu uygulamalar için macOS'e soramadı: {apps}. Tekrar deneyin.",
+  "marketplace.app.automation.app.calendar": "Takvim",
+  "marketplace.app.automation.app.contacts": "Kişiler",
+  "marketplace.app.automation.app.mail": "Mail",
+  "marketplace.app.automation.app.notes": "Notlar",
+  "marketplace.app.automation.app.reminders": "Anımsatıcılar",
+  "marketplace.app.automation.app.messages": "Mesajlar",
+  "marketplace.app.automation.app.safari": "Safari",
   "marketplace.app.signInTitle": "{name} hesabında yeniden oturum açın",
   "marketplace.app.signInDescription":
     "{name} kayıtlı oturumu reddetti. Yeniden oturum açana kadar ajanlarınız bu uygulamayı kullanamaz.",
@@ -218,7 +234,7 @@ export const messages = {
     "Açık Paper dosyasındaki tasarım token'larını listele ve temamızla karşılaştır.",
   "marketplace.plugin.appleApps.tagline": "Mac'inizde Mail, Takvim ve daha fazlası",
   "marketplace.plugin.appleApps.description":
-    "Apple apps, ajanların bu Mac'te Mail, Takvim, Kişiler, Anımsatıcılar, Notlar, Mesajlar ve Safari'yi kullanmasını sağlar. Yalnızca macOS'te çalışır. OpenBot, Apple veya OpenBot tarafından yapılmamış bir topluluk sunucusu olan mcp-icloud'u başlatır. Sunucu uygulamaları bu bilgisayarda AppleScript ile kontrol eder ve hesap ya da anahtar gerektirmez. Bir ajan bir uygulamayı ilk kez kullandığında macOS, OpenBot'un onu kontrol edip edemeyeceğini sorar. Bunu daha sonra değiştirmek için Sistem Ayarları › Gizlilik ve Güvenlik › Otomasyon'u açın. Ajanlar e-posta ve iMessage gönderebilir, etkinlikleri, kişileri ve anımsatıcıları değiştirebilir veya silebilir; bu yüzden her yazma işlemini onaylamadan önce gözden geçirin. Araçların okuduğu içerik, örneğin e-posta metni, ajanın model sağlayıcısına gider.",
+    "Apple apps, ajanların bu Mac'te Mail, Takvim, Kişiler, Anımsatıcılar, Notlar, Mesajlar ve Safari'yi kullanmasını sağlar. Yalnızca macOS'te çalışır. OpenBot, Apple veya OpenBot tarafından yapılmamış bir topluluk sunucusu olan mcp-icloud'u başlatır. Sunucu uygulamaları bu bilgisayarda AppleScript ile kontrol eder ve hesap ya da anahtar gerektirmez. Yükleme sırasında OpenBot, macOS'ten bu uygulamaların tümüne tek seferde erişim isteyebilir; her uygulama için bir istem gösterilir. İstemezseniz, bir ajan bir uygulamayı ilk kez kullandığında macOS sorar. Bunu daha sonra değiştirmek için Sistem Ayarları › Gizlilik ve Güvenlik › Otomasyon'u açın. Ajanlar e-posta ve iMessage gönderebilir, etkinlikleri, kişileri ve anımsatıcıları değiştirebilir veya silebilir; bu yüzden her yazma işlemini onaylamadan önce gözden geçirin. Araçların okuduğu içerik, örneğin e-posta metni, ajanın model sağlayıcısına gider.",
   "marketplace.plugin.appleApps.app":
     "Yerel mcp-icloud sunucusu üzerinden Mail, Takvim, Kişiler, Anımsatıcılar, Notlar, Mesajlar ve Safari. macOS ve Otomasyon izni gerekir.",
   "marketplace.plugin.appleApps.prompt.unread": "Apple Mail'deki bugünkü okunmamış e-postalarımı özetle.",
@@ -393,6 +409,14 @@ export const messages = {
   "marketplace.plugin.todoist.prompt.today": "Bugün hangi Todoist görevlerinin süresi doluyor?",
   "marketplace.plugin.todoist.prompt.capture": "Bu yapılacak maddeleri Todoist Gelen Kutuma ekle.",
   "marketplace.plugin.todoist.prompt.overdue": "Geciken Todoist görevlerimi yarına taşı.",
+  "marketplace.plugin.trello.tagline": "Panolar, listeler ve kartlar",
+  "marketplace.plugin.trello.description":
+    "Trello ile ajanlar panoları, listeleri, kartları, kontrol listelerini ve yorumları arayıp okur, pano ve kart oluşturur, listeleri ve kartları taşır, kartları tamamlandı olarak işaretler ve kontrol listesi, yorum ve etiket ekler. Ajanlar ayrıca kullanıcının Trello Gelen Kutusu'ndaki kartları okuyup kart ekleyebilir ve bağlı bir Google veya Outlook takviminden gelebilen Planner etkinliklerini okuyabilir. Her kullanıcı tarayıcıda kendi Trello hesabına giriş yapar ve bir onay ekranında çalışma alanlarını seçer. Ajanlar bu çalışma alanlarında kullanıcıyla aynı izinlere sahiptir. Kartları ve listeleri arşivleyebilirler, ancak sunucu hiçbir şeyi kalıcı olarak silemez.",
+  "marketplace.plugin.trello.app":
+    "Panolar, listeler ve kartlar, tarayıcıda giriş yapılan Trello MCP sunucusu üzerinden.",
+  "marketplace.plugin.trello.prompt.myCards": "Bana hangi Trello kartları atanmış?",
+  "marketplace.plugin.trello.prompt.board": "Trello panomda devam eden işleri özetle.",
+  "marketplace.plugin.trello.prompt.newCards": "Bu yapılacak maddeleri Trello panoma kart olarak ekle.",
   "marketplace.plugin.huggingface.tagline": "Hub'daki modeller, veri kümeleri ve makaleler",
   "marketplace.plugin.huggingface.description":
     "Hugging Face, ajanların Hugging Face Hub'da modelleri, veri kümelerini, Spaces'i, koleksiyonları ve makaleleri aramasına, model kartlarını ve depo dosyalarını okumasına, veri kümelerini önizlemesine ve Hugging Face belgelerinde arama yapmasına olanak tanır. Herkese açık Hub verilerini kullanır ve hesap ya da anahtar gerektirmez. Araçlar yalnızca okur: ajanlar depo oluşturamaz ve iş (job) çalıştıramaz.",

@@ -132,6 +132,22 @@ export const messages = defineMessages("marketplace", {
   "marketplace.app.setup.desktopConnected": "Connected to {address}.",
   "marketplace.app.setup.open": "No sign-in or key needed.",
   "marketplace.app.connectAgain": "Connect again",
+  "marketplace.app.automation.askOnInstall": "Ask macOS for access at install",
+  "marketplace.app.automation.title": "Access to Apple apps",
+  "marketplace.app.automation.description":
+    "macOS shows one prompt for each app. A closed app opens for a moment, then quits.",
+  "marketplace.app.automation.request": "Ask for access",
+  "marketplace.app.automation.allowed": "OpenBot can now control all of the Apple apps.",
+  "marketplace.app.automation.refused":
+    "macOS did not give access to {apps}. Allow OpenBot in System Settings › Privacy & Security › Automation.",
+  "marketplace.app.automation.failed": "OpenBot could not ask macOS about {apps}. Try again.",
+  "marketplace.app.automation.app.calendar": "Calendar",
+  "marketplace.app.automation.app.contacts": "Contacts",
+  "marketplace.app.automation.app.mail": "Mail",
+  "marketplace.app.automation.app.notes": "Notes",
+  "marketplace.app.automation.app.reminders": "Reminders",
+  "marketplace.app.automation.app.messages": "Messages",
+  "marketplace.app.automation.app.safari": "Safari",
   // The plugin page alert when the server refused an app's saved sign-in.
   "marketplace.app.signInTitle": "Sign in to {name} again",
   "marketplace.app.signInDescription":
@@ -202,7 +218,7 @@ export const messages = defineMessages("marketplace", {
     "List the design tokens in the open Paper file and compare them with our theme.",
   "marketplace.plugin.appleApps.tagline": "Mail, Calendar and more on your Mac",
   "marketplace.plugin.appleApps.description":
-    "Apple apps lets agents use Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari on this Mac. It works on macOS only. OpenBot starts mcp-icloud, a community server that is not made by Apple or OpenBot. The server controls the apps through AppleScript, on this computer, and needs no account and no key. The first time an agent uses an app, macOS asks if OpenBot can control it. To change this later, open System Settings › Privacy & Security › Automation. Agents can send email and iMessages, and change or delete events, contacts and reminders, so review each write before you approve it. What the tools read, such as email text, goes to the model provider of the agent.",
+    "Apple apps lets agents use Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari on this Mac. It works on macOS only. OpenBot starts mcp-icloud, a community server that is not made by Apple or OpenBot. The server controls the apps through AppleScript, on this computer, and needs no account and no key. When you install it, OpenBot can ask macOS for access to all of these apps at once, with one prompt for each app. If you do not, macOS asks the first time an agent uses an app. To change this later, open System Settings › Privacy & Security › Automation. Agents can send email and iMessages, and change or delete events, contacts and reminders, so review each write before you approve it. What the tools read, such as email text, goes to the model provider of the agent.",
   "marketplace.plugin.appleApps.app":
     "Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari, over the local mcp-icloud server. Needs macOS and Automation access.",
   "marketplace.plugin.appleApps.prompt.unread": "Summarize my unread email in Apple Mail from today.",
@@ -373,6 +389,13 @@ export const messages = defineMessages("marketplace", {
   "marketplace.plugin.todoist.prompt.today": "Which Todoist tasks are due today?",
   "marketplace.plugin.todoist.prompt.capture": "Add these action items to my Todoist Inbox.",
   "marketplace.plugin.todoist.prompt.overdue": "Move my overdue Todoist tasks to tomorrow.",
+  "marketplace.plugin.trello.tagline": "Boards, lists and cards",
+  "marketplace.plugin.trello.description":
+    "Trello lets agents search and read boards, lists, cards, checklists and comments, create boards and cards, move lists and cards, mark cards done, and add checklists, comments and labels. Agents can also read and add cards in the user's Trello Inbox, and read Planner events, which can come from a connected Google or Outlook calendar. Each user signs in to their own Trello account through the browser and chooses the workspaces on a consent screen. Agents get the same permissions as the user in those workspaces. They can archive cards and lists, but the server cannot delete anything permanently.",
+  "marketplace.plugin.trello.app": "Boards, lists, and cards, over Trello's MCP server with browser sign-in.",
+  "marketplace.plugin.trello.prompt.myCards": "Which Trello cards are assigned to me?",
+  "marketplace.plugin.trello.prompt.board": "Summarize what is in progress on my Trello board.",
+  "marketplace.plugin.trello.prompt.newCards": "Add these action items as cards to my Trello board.",
   "marketplace.plugin.huggingface.tagline": "Models, datasets and papers on the Hub",
   "marketplace.plugin.huggingface.description":
     "Hugging Face lets agents search models, datasets, Spaces, collections and papers on the Hugging Face Hub, read model cards and repository files, preview datasets, and search the Hugging Face documentation. It uses public Hub data and needs no account and no key. The tools only read: agents cannot create repositories or run jobs.",

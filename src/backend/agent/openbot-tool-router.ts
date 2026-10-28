@@ -32,7 +32,7 @@ import { createOpenBotLogger, redactText } from "@openbot/logging";
 import { Effect, Result } from "effect";
 import { z } from "zod";
 import pluginCatalog from "../../../resources/plugin-catalog/catalog.json";
-import type { AgentApiKeys } from "../agent-api-keys";
+import type { AgentApiKeys, SavedApiKey } from "../agent-api-keys";
 import type { AgentClient, AgentProvider } from "../agent-client";
 import type { AgentTables } from "../agent-data/agent-tables";
 import type { AgentStore } from "../agent-store";
@@ -344,7 +344,8 @@ export class OpenBotToolRouter {
               const agentId = this.#conversation.agentForThread(params.threadId);
               if (!agentId) throw new Error("The calling OpenBot agent is unknown.");
               try {
-                const result = discoverTools(params, this.#requireAgent(agentId));
+                this.#requireAgent(agentId);
+                const result = discoverTools(params);
                 client.respond(request.id, openBotToolResult(result));
               } catch {
                 client.respond(request.id, openBotToolFailure(sourceText("error.agent.toolRequestInvalid")));
@@ -589,6 +590,10 @@ export class OpenBotToolRouter {
     const parsed = requestApiKeyToolSchema.safeParse(params.arguments);
     if (!parsed.success)
       return openBotToolFailure(`${z.prettifyError(parsed.error)}\nCorrect the arguments and retry.`);
+    // A key that the Vault has is used as it is: a copy for this agent would not follow a change in the Vault.
+    const keys = yield* apiKeys.list(agentId).pipe(Effect.catch(() => Effect.succeed<SavedApiKey[]>([])));
+    const vaultKey = keys.find((key) => key.name === parsed.data.name && key.source === "vault");
+    if (vaultKey) return openBotToolResult({ status: "saved", ...vaultKey });
     if (this.#messaging.store.linkForThread(this.#conversation.publicThreadId(agentId, params.threadId)))
       return openBotToolFailure(
         "request_api_key does not work in a Slack, Discord or Telegram chat. Ask the user to give you the key in OpenBot.",

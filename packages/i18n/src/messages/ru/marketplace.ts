@@ -142,6 +142,22 @@ export const messages = {
   "marketplace.app.setup.desktopConnected": "Подключено к {address}.",
   "marketplace.app.setup.open": "Вход и ключ не нужны.",
   "marketplace.app.connectAgain": "Подключить снова",
+  "marketplace.app.automation.askOnInstall": "Запросить доступ у macOS при установке",
+  "marketplace.app.automation.title": "Доступ к приложениям Apple",
+  "marketplace.app.automation.description":
+    "macOS показывает один запрос для каждого приложения. Закрытое приложение ненадолго откроется, а затем закроется.",
+  "marketplace.app.automation.request": "Запросить доступ",
+  "marketplace.app.automation.allowed": "Теперь OpenBot может управлять всеми приложениями Apple.",
+  "marketplace.app.automation.refused":
+    "macOS не дала доступ к приложениям: {apps}. Разрешите OpenBot в Системных настройках › Конфиденциальность и безопасность › Автоматизация.",
+  "marketplace.app.automation.failed": "OpenBot не смог запросить macOS о приложениях: {apps}. Попробуйте ещё раз.",
+  "marketplace.app.automation.app.calendar": "Календарь",
+  "marketplace.app.automation.app.contacts": "Контакты",
+  "marketplace.app.automation.app.mail": "Почта",
+  "marketplace.app.automation.app.notes": "Заметки",
+  "marketplace.app.automation.app.reminders": "Напоминания",
+  "marketplace.app.automation.app.messages": "Сообщения",
+  "marketplace.app.automation.app.safari": "Safari",
   "marketplace.app.signInTitle": "Снова войдите в {name}",
   "marketplace.app.signInDescription":
     "«{name}» отклонил сохранённый вход. Агенты не смогут им пользоваться, пока вы снова не войдёте.",
@@ -216,7 +232,7 @@ export const messages = {
     "Перечислите токены дизайна в открытом файле Paper и сравните их с нашей темой.",
   "marketplace.plugin.appleApps.tagline": "Почта, Календарь и другое на вашем Mac",
   "marketplace.plugin.appleApps.description":
-    "Apple apps позволяет агентам работать с приложениями Почта, Календарь, Контакты, Напоминания, Заметки, Сообщения и Safari на этом Mac. Работает только в macOS. OpenBot запускает mcp-icloud — сервер сообщества, который не создан Apple или OpenBot. Сервер управляет приложениями через AppleScript на этом компьютере, и ему не нужны аккаунт или ключ. Когда агент впервые использует приложение, macOS спрашивает, может ли OpenBot им управлять. Чтобы изменить это позже, откройте Системные настройки › Конфиденциальность и безопасность › Автоматизация. Агенты могут отправлять письма и iMessage, а также изменять или удалять события, контакты и напоминания, поэтому проверяйте каждую запись перед подтверждением. То, что читают инструменты, например текст писем, передаётся провайдеру модели агента.",
+    "Apple apps позволяет агентам работать с приложениями Почта, Календарь, Контакты, Напоминания, Заметки, Сообщения и Safari на этом Mac. Работает только в macOS. OpenBot запускает mcp-icloud — сервер сообщества, который не создан Apple или OpenBot. Сервер управляет приложениями через AppleScript на этом компьютере, и ему не нужны аккаунт или ключ. При установке OpenBot может сразу запросить у macOS доступ ко всем этим приложениям, по одному запросу на приложение. Иначе macOS спросит, когда агент впервые использует приложение. Чтобы изменить это позже, откройте Системные настройки › Конфиденциальность и безопасность › Автоматизация. Агенты могут отправлять письма и iMessage, а также изменять или удалять события, контакты и напоминания, поэтому проверяйте каждую запись перед подтверждением. То, что читают инструменты, например текст писем, передаётся провайдеру модели агента.",
   "marketplace.plugin.appleApps.app":
     "Почта, Календарь, Контакты, Напоминания, Заметки, Сообщения и Safari через локальный сервер mcp-icloud. Нужны macOS и доступ в разделе «Автоматизация».",
   "marketplace.plugin.appleApps.prompt.unread": "Кратко перескажите мои непрочитанные письма за сегодня в Apple Почте.",
@@ -388,6 +404,13 @@ export const messages = {
   "marketplace.plugin.todoist.prompt.today": "Какие задачи в Todoist нужно сделать сегодня?",
   "marketplace.plugin.todoist.prompt.capture": "Добавь эти пункты в мои «Входящие» в Todoist.",
   "marketplace.plugin.todoist.prompt.overdue": "Перенеси мои просроченные задачи в Todoist на завтра.",
+  "marketplace.plugin.trello.tagline": "Доски, списки и карточки",
+  "marketplace.plugin.trello.description":
+    "С Trello агенты ищут и читают доски, списки, карточки, чек-листы и комментарии, создают доски и карточки, перемещают списки и карточки, отмечают карточки выполненными и добавляют чек-листы, комментарии и метки. Агенты также могут читать и добавлять карточки во «Входящих» Trello пользователя и читать события Planner, которые могут приходить из подключённого календаря Google или Outlook. Каждый пользователь входит в свой аккаунт Trello через браузер и выбирает рабочие пространства на экране согласия. В этих рабочих пространствах у агентов те же права, что и у пользователя. Они могут архивировать карточки и списки, но сервер не может ничего удалить навсегда.",
+  "marketplace.plugin.trello.app": "Доски, списки и карточки через сервер MCP Trello со входом через браузер.",
+  "marketplace.plugin.trello.prompt.myCards": "Какие карточки в Trello назначены мне?",
+  "marketplace.plugin.trello.prompt.board": "Кратко опиши, что сейчас в работе на моей доске Trello.",
+  "marketplace.plugin.trello.prompt.newCards": "Добавь эти пункты как карточки на мою доску Trello.",
   "marketplace.plugin.huggingface.tagline": "Модели, датасеты и статьи на Hub",
   "marketplace.plugin.huggingface.description":
     "Hugging Face позволяет агентам искать модели, датасеты, Spaces, коллекции и статьи на Hugging Face Hub, читать карточки моделей и файлы репозиториев, просматривать датасеты и искать по документации Hugging Face. Он использует публичные данные Hub и не требует аккаунта и ключа. Инструменты только читают данные: агенты не могут создавать репозитории или запускать задачи.",

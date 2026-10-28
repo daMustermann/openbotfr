@@ -82,9 +82,10 @@ const logger = createOpenBotLogger("thread-lifecycle");
  * server names in the form Codex accepts. Version 7 keeps approvals for custom MCP servers. Version 8
  * is the MCP namespaces in `features.code_mode.direct_only_tool_namespaces`: Codex 0.164 does not
  * add them on resume to a thread started without them, so a code-mode-only model saw no MCP tools.
- * Version 9 adds explicit instructions to call OpenBot tools directly, outside code mode.
+ * Version 9 adds `image_gen` to those namespaces.
+ * Fork version 10 also keeps explicit instructions to call OpenBot tools directly, outside code mode.
  */
-const CODEX_MCP_ADAPTER_VERSION = 9;
+const CODEX_MCP_ADAPTER_VERSION = 10;
 
 /** What a provider other than Codex, or a Codex with no file to read, has in its own files. */
 const NO_CODEX_OWN_SERVERS: CodexOwnServers = { disabled: {}, transports: {} };
@@ -111,9 +112,11 @@ const CODEX_TOOLS_CONFIG = { update_plan: { enabled: true } } as const;
  * after its yield time while `ask_user` still waits. A model that then ends its turn expires the
  * question within seconds. Direct calls keep the turn waiting for the answer. It goes in as one
  * dotted key, as the agent environment does, so it does not turn code mode on or off. Each thread
- * adds the namespaces of its MCP servers, see `codexMcpNamespaces`.
+ * adds the namespaces of its MCP servers, see `codexMcpNamespaces`. `image_gen` is direct because
+ * from `exec` a model often reads `result.content` instead of `generatedImage(result)`: it then sees
+ * no image and tells the user that the image failed, although the chat shows it.
  */
-const CODEX_DIRECT_ONLY_NAMESPACES = VISIBLE_DYNAMIC_TOOLS.map((namespace) => namespace.name);
+const CODEX_DIRECT_ONLY_NAMESPACES = [...VISIBLE_DYNAMIC_TOOLS.map((namespace) => namespace.name), "image_gen"];
 
 /** The provider switch waits for the capture, so its read is short. */
 const CAPTURE_READ_TIMEOUT_MS = 10_000;

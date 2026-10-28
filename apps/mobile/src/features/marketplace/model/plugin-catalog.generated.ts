@@ -315,6 +315,38 @@ export const MOBILE_PLUGINS: readonly MobilePlugin[] = [
     ],
   },
   {
+    slug: "trello",
+    name: "Trello",
+    tagline: "Boards, lists and cards",
+    description:
+      "Trello lets agents search and read boards, lists, cards, checklists and comments, create boards and cards, move lists and cards, mark cards done, and add checklists, comments and labels. Agents can also read and add cards in the user's Trello Inbox, and read Planner events, which can come from a connected Google or Outlook calendar. Each user signs in to their own Trello account through the browser and chooses the workspaces on a consent screen. Agents get the same permissions as the user in those workspaces. They can archive cards and lists, but the server cannot delete anything permanently.",
+    category: "productivity",
+    creatorName: "Atlassian",
+    version: "1.0.0",
+    prompts: [
+      { id: "prompt-my-cards", text: "Which Trello cards are assigned to me?" },
+      { id: "prompt-board", text: "Summarize what is in progress on my Trello board." },
+      { id: "prompt-new-cards", text: "Add these action items as cards to my Trello board." },
+    ],
+    websiteUrl: "https://trello.com",
+    privacyPolicyUrl: "https://www.atlassian.com/legal/privacy-policy",
+    termsUrl: "https://www.atlassian.com/legal/atlassian-customer-agreement",
+    featured: false,
+    apps: [
+      {
+        id: "app-trello-mcp",
+        name: "Trello",
+        description: "Boards, lists, and cards, over Trello's MCP server with browser sign-in.",
+        server: {
+          name: "trello",
+          transport: "http",
+          url: "https://mcp.trello.com/v1",
+          auth: [{ id: "trello-oauth", kind: "link", label: "Sign in" }],
+        },
+      },
+    ],
+  },
+  {
     slug: "cobrain",
     name: "Cobrain",
     tagline: "Shared memory for your AI agents",
@@ -429,10 +461,10 @@ export const MOBILE_PLUGINS: readonly MobilePlugin[] = [
     name: "Apple apps",
     tagline: "Mail, Calendar and more on your Mac",
     description:
-      "Apple apps lets agents use Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari on this Mac. It works on macOS only. OpenBot starts mcp-icloud, a community server that is not made by Apple or OpenBot. The server controls the apps through AppleScript, on this computer, and needs no account and no key. The first time an agent uses an app, macOS asks if OpenBot can control it. To change this later, open System Settings › Privacy & Security › Automation. Agents can send email and iMessages, and change or delete events, contacts and reminders, so review each write before you approve it. What the tools read, such as email text, goes to the model provider of the agent.",
+      "Apple apps lets agents use Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari on this Mac. It works on macOS only. OpenBot starts mcp-icloud, a community server that is not made by Apple or OpenBot. The server controls the apps through AppleScript, on this computer, and needs no account and no key. When you install it, OpenBot can ask macOS for access to all of these apps at once, with one prompt for each app. If you do not, macOS asks the first time an agent uses an app. To change this later, open System Settings › Privacy & Security › Automation. Agents can send email and iMessages, and change or delete events, contacts and reminders, so review each write before you approve it. What the tools read, such as email text, goes to the model provider of the agent.",
     category: "productivity",
     creatorName: "MrGo2",
-    version: "1.0.0",
+    version: "1.1.0",
     prompts: [
       { id: "prompt-unread", text: "Summarize my unread email in Apple Mail from today." },
       { id: "prompt-today", text: "What is on my Apple Calendar today and tomorrow?" },

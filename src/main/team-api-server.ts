@@ -49,6 +49,7 @@ import {
   AGENT_UPDATE_CAPABILITY,
   ANDROID_PUSH_NOTIFICATIONS_CAPABILITY,
   BITWARDEN_CONNECTOR_CAPABILITY,
+  BROWSER_SECRET_VAULT_CAPABILITY,
   BROWSER_SIGN_IN_CAPABILITY,
   CHANNEL_DELETE_CAPABILITY,
   CONNECTORS_CAPABILITY,
@@ -72,6 +73,7 @@ import {
   PROMPT_CACHE_TTL_CAPABILITY,
   PROVIDER_ACCOUNT_RELAY_CAPABILITY,
   PROVIDER_ACCOUNTS_CAPABILITY,
+  PROVIDER_DEFAULT_CAPABILITY,
   PROVIDER_HOST_SIGN_IN_CAPABILITY,
   PROVIDER_USAGE_RESET_CAPABILITY,
   PROVIDERS_ADMIN_CAPABILITY,
@@ -99,6 +101,8 @@ import {
   TEAM_UI_BLOCKS_CAPABILITY,
   type TeamCurrentCapability,
   VAULT_CAPABILITY,
+  VAULT_IMPORT_CAPABILITY,
+  VAULT_V2_CAPABILITY,
   WEBHOOK_TESTS_CAPABILITY,
   WORKFLOWS_CAPABILITY,
 } from "@openbot/contracts/team-protocol/current";
@@ -109,6 +113,10 @@ import {
   type HostRestartState,
 } from "@openbot/contracts/team-protocol/host-update-v1";
 import { teamHttpCodec } from "@openbot/contracts/team-protocol/http-codecs";
+import {
+  MACHINE_RESOURCES_CAPABILITY,
+  type MachineAlertEvent,
+} from "@openbot/contracts/team-protocol/machine-resources-v1";
 import { type OptionalTeamEvent, optionalTeamEvent } from "@openbot/contracts/team-protocol/optional-events";
 import { PROVIDERS_V8_CAPABILITY } from "@openbot/contracts/team-protocol/providers-v8";
 import { teamSideRouteCodec } from "@openbot/contracts/team-protocol/side-routes";
@@ -206,12 +214,14 @@ import { routeHostUpdate } from "./team-api/route-host-update";
 import { routeHostedSites } from "./team-api/route-hosted-sites";
 import { routeInstanceTransfer } from "./team-api/route-instance-transfer";
 import { routeLiveActivityPush } from "./team-api/route-live-activity-push";
+import { routeMachineResources } from "./team-api/route-machine-resources";
 import { routeMcpServers } from "./team-api/route-mcp";
 import { routeMcpSignIn } from "./team-api/route-mcp-sign-in";
 import { routeMcpSignInApp } from "./team-api/route-mcp-sign-in-app";
 import { routeOnePasswordConnector } from "./team-api/route-onepassword-connector";
 import { routePromptCacheTtl } from "./team-api/route-prompt-cache-ttl";
 import { routeProviderAccounts } from "./team-api/route-provider-accounts";
+import { routeProviderDefault } from "./team-api/route-provider-default";
 import { routeProviderHostSignIn } from "./team-api/route-provider-host-sign-in";
 import { routeProviderUsageReset } from "./team-api/route-provider-usage-reset";
 import { routeProviders } from "./team-api/route-providers";
@@ -226,6 +236,7 @@ import { routeSkillsAdmin } from "./team-api/route-skills-admin";
 import { routeStorage } from "./team-api/route-storage";
 import { routeTeam } from "./team-api/route-team";
 import { routeVault } from "./team-api/route-vault";
+import { routeVaultImport } from "./team-api/route-vault-import";
 import { routeWorkflows } from "./team-api/route-workflows";
 import { routeWorkspaceDirectory } from "./team-api/route-workspace-directory";
 import { TeamStoreError } from "./team-store";
@@ -332,6 +343,7 @@ export class TeamApiServer {
   #agentListener: ((event: AgentEvent) => void) | null = null;
   #sidebarLayoutListener: ((layout: SidebarLayoutSnapshot) => void) | null = null;
   #stopAgentAccessListener: (() => void) | null = null;
+  #stopMachineAlertListener: (() => void) | null = null;
   #localTypingAgentId: string | null = null;
   readonly #reportedUnrepresentableAgents = new Set<string>();
   #nextRateLimitSweepAt = 0;
@@ -427,6 +439,10 @@ export class TeamApiServer {
     this.#options.sidebarLayout.on("changed", this.#sidebarLayoutListener);
     // A change from Settings on this computer and one from a joined admin both arrive here.
     this.#stopAgentAccessListener = this.#options.agentAccess?.subscribe(() => this.agentAccessChanged()) ?? null;
+    this.#stopMachineAlertListener =
+      this.#options.machine?.subscribe((memberId, event) => {
+        if (memberId) this.#sendMachineAlert(memberId, event);
+      }) ?? null;
     this.#heartbeat = setInterval(() => {
       for (const [client, connection] of this.#eventClients) {
         if (!this.#options.store.authenticate(connection.token)) {
@@ -448,6 +464,8 @@ export class TeamApiServer {
     this.#sidebarLayoutListener = null;
     this.#stopAgentAccessListener?.();
     this.#stopAgentAccessListener = null;
+    this.#stopMachineAlertListener?.();
+    this.#stopMachineAlertListener = null;
     yield* Scope.close(this.#legacyConversationScope, Exit.void);
     this.#legacyConversationScope = Scope.makeUnsafe();
     for (const [client, connection] of this.#eventClients) {
@@ -597,6 +615,29 @@ export class TeamApiServer {
     )
       return;
     if (client.readyState === webSockets.WebSocket.OPEN) client.send(JSON.stringify(this.#hostRestart));
+  }
+
+  /**
+   * Sends a machine alert to each device of the member who gets it. It is outside the frozen event
+   * vocabulary, so it bypasses the encoders like `host-restart` does. A device that connects later
+   * gets the alerts still in force (`#sendPendingMachineAlerts`).
+   */
+  #sendMachineAlert(memberId: string, event: MachineAlertEvent): void {
+    for (const [client, connection] of this.#eventClients) {
+      if (
+        connection.memberId === memberId &&
+        connection.capabilities.has(MACHINE_RESOURCES_CAPABILITY) &&
+        client.readyState === webSockets.WebSocket.OPEN
+      )
+        client.send(JSON.stringify(event));
+    }
+  }
+
+  #sendPendingMachineAlerts(client: Ws.WebSocket, connection: EventClientState): void {
+    const machine = this.#options.machine;
+    if (!machine || !connection.capabilities.has(MACHINE_RESOURCES_CAPABILITY)) return;
+    if (client.readyState !== webSockets.WebSocket.OPEN) return;
+    for (const event of machine.pending(connection.memberId)) client.send(JSON.stringify(event));
   }
 
   #sendBrowserUserControl(client: Ws.WebSocket, connection: EventClientState): void {
@@ -852,10 +893,12 @@ export class TeamApiServer {
       if ((await routeOnePasswordConnector(context, this.#options.onePasswordConnector)) === "handled") return;
       if ((await routeBitwardenConnector(context, this.#options.bitwardenConnector)) === "handled") return;
       if ((await routeVault(context, this.#options.vault)) === "handled") return;
+      if ((await routeVaultImport(context, this.#options.vault)) === "handled") return;
       if ((await routeProviderHostSignIn(context, this.#options.providerHostSignIns)) === "handled") return;
       if ((await routeProviderAccounts(context, this.#options.providerAccounts)) === "handled") return;
       if ((await routeProviderUsageReset(context, this.#options.providerUsageResets)) === "handled") return;
       if ((await routeStorage(context, this.#options.storage)) === "handled") return;
+      if ((await routeMachineResources(context, this.#options.machine)) === "handled") return;
       if ((await routeHostedSites(context, this.#options.hostedSites)) === "handled") return;
       if ((await routeAgentAdmin(context, this.#options.admin, hidden)) === "handled") return;
       if ((await routeAgentHostSettings(context, this.#options.admin, hidden)) === "handled") return;
@@ -882,6 +925,7 @@ export class TeamApiServer {
       if ((await routeHostTimezone(context, this.#options.admin)) === "handled") return;
       if ((await routeAgentMemoryLimit(context, this.#options.admin)) === "handled") return;
       if ((await routePromptCacheTtl(context, this.#options.admin)) === "handled") return;
+      if ((await routeProviderDefault(context, this.#options.admin)) === "handled") return;
       if (
         (await routeAgentAccess(
           context,
@@ -1452,6 +1496,7 @@ export class TeamApiServer {
               connection.capabilities.has(HOST_MEMBER_UPDATE_CAPABILITY);
             const userControlWasSent = connection.capabilities.has(BROWSER_USER_CONTROL_CAPABILITY);
             const pageStateWasSent = connection.capabilities.has(BROWSER_PAGE_STATE_CAPABILITY);
+            const machineAlertsWereSent = connection.capabilities.has(MACHINE_RESOURCES_CAPABILITY);
             connection.capabilities = new Set(event.capabilities.filter(isTeamCurrentCapability));
             if (connection.capabilities.has("agent-runtime-snapshots") && !snapshotsWereEnabled) {
               this.#sendRuntimeSnapshot(client, connection, false);
@@ -1463,6 +1508,8 @@ export class TeamApiServer {
               this.#sendBrowserUserControl(client, connection);
             if (!pageStateWasSent && connection.capabilities.has(BROWSER_PAGE_STATE_CAPABILITY))
               this.#sendBrowserPageState(client, connection);
+            // An alert that came while the member had no device online.
+            if (!machineAlertsWereSent) this.#sendPendingMachineAlerts(client, connection);
           }
           connection.includeConversationEvents = event.includeConversations;
           return;
@@ -1905,11 +1952,15 @@ export class TeamApiServer {
         if (capability === ONEPASSWORD_CONNECTOR_CAPABILITY) return this.#options.onePasswordConnector !== undefined;
         if (capability === BITWARDEN_CONNECTOR_CAPABILITY) return this.#options.bitwardenConnector !== undefined;
         if (capability === VAULT_CAPABILITY) return this.#options.vault !== undefined;
+        if (capability === BROWSER_SECRET_VAULT_CAPABILITY) return this.#options.vault !== undefined;
+        if (capability === VAULT_IMPORT_CAPABILITY) return this.#options.vault !== undefined;
+        if (capability === VAULT_V2_CAPABILITY) return this.#options.vault !== undefined;
         if (capability === PROVIDER_HOST_SIGN_IN_CAPABILITY) return this.#options.providerHostSignIns !== undefined;
         if (capability === PROVIDER_ACCOUNTS_CAPABILITY) return this.#options.providerAccounts !== undefined;
         if (capability === PROVIDER_USAGE_RESET_CAPABILITY) return this.#options.providerUsageResets !== undefined;
         if (capability === STORAGE_CAPABILITY) return this.#options.storage !== undefined;
         if (capability === STORAGE_DISK_CAPABILITY) return this.#options.storage !== undefined;
+        if (capability === MACHINE_RESOURCES_CAPABILITY) return this.#options.machine !== undefined;
         if (capability === HOSTED_SITES_CAPABILITY) return this.#options.hostedSites !== undefined;
         if (capability === AGENT_ADMIN_CAPABILITY) return this.#options.admin?.agents !== undefined;
         if (capability === ACP_REGISTRY_CAPABILITY) return this.#options.admin?.acpRegistry !== undefined;
@@ -1945,6 +1996,7 @@ export class TeamApiServer {
         if (capability === HOST_TIMEZONE_CAPABILITY) return this.#options.admin?.timezone !== undefined;
         if (capability === AGENT_MEMORY_LIMIT_CAPABILITY) return this.#options.admin?.memoryLimit !== undefined;
         if (capability === PROMPT_CACHE_TTL_CAPABILITY) return this.#options.admin?.promptCacheTtl !== undefined;
+        if (capability === PROVIDER_DEFAULT_CAPABILITY) return this.#options.admin?.defaultProvider !== undefined;
         if (capability === AGENT_ACCESS_CAPABILITY) return this.#options.agentAccess !== undefined;
         if (capability === HOST_UPDATE_CAPABILITY || capability === HOST_MEMBER_UPDATE_CAPABILITY)
           return this.#options.admin?.update !== undefined;

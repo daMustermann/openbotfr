@@ -1,5 +1,5 @@
 // The Vault items of this computer, encrypted at rest by the operating system. The file holds one
-// envelope; its record is the whole Vault, so a change rewrites the file atomically.
+// envelope. API keys have a separate encrypted file that released writers do not change.
 
 import { readFile, rm } from "node:fs/promises";
 import { sourceText } from "@openbot/i18n/source";
@@ -60,21 +60,34 @@ const contactSchema = Schema.Struct({
   addedBy,
 });
 
+const apiKeySchema = Schema.Struct({
+  id: Schema.String,
+  /** An environment variable name, unique in the Vault. */
+  name: Schema.String,
+  key: Schema.String,
+  notes: Schema.String,
+  addedBy,
+});
+
 const recordSchema = Schema.Struct({
   logins: Schema.Array(loginSchema),
   cards: Schema.Array(cardSchema),
   contacts: Schema.Array(contactSchema),
+  // Read the first API-key format too. New writes keep these keys in a separate file.
+  apiKeys: Schema.Array(apiKeySchema).pipe(Schema.withDecodingDefaultKey(Effect.succeed([]))),
 });
 
 export type StoredLogin = typeof loginSchema.Type;
 export type StoredCard = typeof cardSchema.Type;
 export type StoredContact = typeof contactSchema.Type;
+export type StoredApiKey = typeof apiKeySchema.Type;
 export type VaultRecord = typeof recordSchema.Type;
 
-const EMPTY_VAULT_RECORD: VaultRecord = { logins: [], cards: [], contacts: [] };
+const EMPTY_VAULT_RECORD: VaultRecord = { logins: [], cards: [], contacts: [], apiKeys: [] };
 
 /** `version` is checked: an envelope that this build cannot read is reported as unreadable. */
 const envelopeSchema = Schema.Struct({ version: Schema.Literal(1), record: Schema.String });
+const apiKeysSchema = Schema.Struct({ apiKeys: Schema.Array(apiKeySchema) });
 
 /** Thousands of items fit; a larger file is not one that this app wrote. */
 const MAX_VAULT_ENVELOPE_BYTES = 4 * 1024 * 1024;
@@ -89,12 +102,14 @@ function unreadable() {
  */
 export class VaultStore {
   readonly #path: string;
+  readonly #apiKeysPath: string;
   readonly #cipher: SecretCipher;
   #record: VaultRecord = EMPTY_VAULT_RECORD;
   readonly #queue = Semaphore.makeUnsafe(1);
 
   constructor(path: string, cipher: SecretCipher) {
     this.#path = path;
+    this.#apiKeysPath = `${path}.api-keys-v1.json`;
     this.#cipher = cipher;
   }
 
@@ -102,7 +117,17 @@ export class VaultStore {
   load(): Effect.Effect<boolean> {
     return Effect.gen({ self: this }, function* () {
       this.#record = EMPTY_VAULT_RECORD;
-      const result = yield* Effect.result(this.#read());
+      const result = yield* Effect.result(
+        Effect.gen({ self: this }, function* () {
+          const legacy = yield* this.#read(this.#path);
+          const keys = yield* this.#readApiKeys();
+          // Copy the first format before a released writer can replace the legacy record. Keep the
+          // source file in place. An existing separate file, including an empty one, takes priority.
+          if (keys === null && legacy?.apiKeys.length)
+            yield* this.#write(this.#apiKeysPath, { apiKeys: legacy.apiKeys });
+          return { ...(legacy ?? EMPTY_VAULT_RECORD), apiKeys: keys?.apiKeys ?? legacy?.apiKeys ?? [] };
+        }),
+      );
       if (Result.isFailure(result)) return false;
       this.#record = result.success ?? EMPTY_VAULT_RECORD;
       return true;
@@ -122,22 +147,24 @@ export class VaultStore {
       Effect.gen({ self: this }, function* () {
         const next = yield* vaultDecode(() => change(this.#record));
         if (next === this.#record) return next;
-        const encrypted = yield* vaultDecode(() => this.#cipher.encrypt(JSON.stringify(next)).toString("base64"));
-        if (encrypted.length + 32 > MAX_VAULT_ENVELOPE_BYTES)
-          return yield* new PasswordVaultError({ cause: new Error(sourceText("error.vault.tooLarge")) });
-        yield* writeJsonFileAtomically(this.#path, { version: 1, record: encrypted }, { createDirectory: true }).pipe(
-          Effect.mapError(({ cause }) => new PasswordVaultError({ cause })),
-        );
+        const { apiKeys, ...legacy } = next;
+        const { apiKeys: previousKeys, ...previousLegacy } = this.#record;
+        // Each service change affects one store. Do not rewrite the legacy file for an API-key edit.
+        if (JSON.stringify(apiKeys) !== JSON.stringify(previousKeys))
+          yield* this.#write(this.#apiKeysPath, { apiKeys });
+        if (JSON.stringify(legacy) !== JSON.stringify(previousLegacy)) yield* this.#write(this.#path, legacy);
         this.#record = next;
         return next;
       }),
     );
   }
 
-  /** Removes the file and forgets every item. */
+  /** Clears both stores and forgets every item. Only an explicit reset calls this operation. */
   clear(): Effect.Effect<void, PasswordVaultError> {
     return this.#serialize(
       Effect.gen({ self: this }, function* () {
+        // An empty key record also prevents keys in the first format from returning after reset.
+        yield* this.#write(this.#apiKeysPath, { apiKeys: [] });
         yield* vaultCall(() => rm(this.#path, { force: true }));
         this.#record = EMPTY_VAULT_RECORD;
       }),
@@ -148,23 +175,43 @@ export class VaultStore {
     return this.#queue.withPermit(change).pipe(Effect.uninterruptible);
   }
 
-  readonly #read = Effect.fn("VaultStore.read")(function* (
+  readonly #write = Effect.fn("VaultStore.write")(function* (this: VaultStore, path: string, record: object) {
+    const encrypted = yield* vaultDecode(() => this.#cipher.encrypt(JSON.stringify(record)).toString("base64"));
+    if (encrypted.length + 32 > MAX_VAULT_ENVELOPE_BYTES)
+      return yield* new PasswordVaultError({ cause: new Error(sourceText("error.vault.tooLarge")) });
+    yield* writeJsonFileAtomically(path, { version: 1, record: encrypted }, { createDirectory: true }).pipe(
+      Effect.mapError(({ cause }) => new PasswordVaultError({ cause })),
+    );
+  });
+
+  readonly #readApiKeys = Effect.fn("VaultStore.readApiKeys")(function* (this: VaultStore) {
+    const record = yield* this.#readEnvelope(this.#apiKeysPath);
+    if (record === undefined) return null;
+    return yield* vaultDecode(() => Schema.decodeUnknownSync(apiKeysSchema)(record)).pipe(Effect.mapError(unreadable));
+  });
+
+  readonly #read = Effect.fn("VaultStore.read")(function* (this: VaultStore, path: string) {
+    const record = yield* this.#readEnvelope(path);
+    if (record === undefined) return null;
+    return yield* vaultDecode(() => Schema.decodeUnknownSync(recordSchema)(record)).pipe(Effect.mapError(unreadable));
+  });
+
+  readonly #readEnvelope = Effect.fn("VaultStore.readEnvelope")(function* (
     this: VaultStore,
-  ): Effect.fn.Return<VaultRecord | null, PasswordVaultError> {
-    const source = yield* vaultCall(() => readFile(this.#path, "utf8")).pipe(
+    path: string,
+  ): Effect.fn.Return<unknown, PasswordVaultError> {
+    const source = yield* vaultCall(() => readFile(path, "utf8")).pipe(
       Effect.catch(({ cause }) =>
         cause instanceof Error && "code" in cause && cause.code === "ENOENT"
           ? Effect.succeed(null)
           : Effect.fail(new PasswordVaultError({ cause })),
       ),
     );
-    if (source === null) return null;
+    if (source === null) return undefined;
     if (source.length > MAX_VAULT_ENVELOPE_BYTES) return yield* unreadable();
     return yield* vaultDecode(() => {
       const envelope = Schema.decodeUnknownSync(envelopeSchema)(JSON.parse(source));
-      return Schema.decodeUnknownSync(recordSchema)(
-        JSON.parse(this.#cipher.decrypt(Buffer.from(envelope.record, "base64"))),
-      );
+      return JSON.parse(this.#cipher.decrypt(Buffer.from(envelope.record, "base64")));
     }).pipe(Effect.mapError(unreadable));
   });
 }

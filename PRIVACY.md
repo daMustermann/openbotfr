@@ -2,7 +2,7 @@
 
 OpenBotFR (OpenBot For Real) is intended for local desktop use without a hosted
 OpenBot account and without product telemetry. This document describes the code
-in this fork on 27 October 2026. It also identifies work that is not complete.
+in this fork on 28 October 2026. It also identifies work that is not complete.
 
 ## Local data
 
@@ -39,6 +39,27 @@ without checking their contents. Local logging and local inventory data can
 still exist without being transmitted to an analytics server.
 
 ## Services that can use the network
+
+### Vault API keys and local machine metrics
+
+The Vault can store API keys through the operating system's secret storage.
+When an agent lists its keys, OpenBotFR writes the Vault keys to files under
+`agent-api-keys/.vault` in the local profile, outside agent workspaces. Every
+agent on that computer can read those files with its command tools. Changes
+and deletions in the Vault update these files. Keys are redacted from logs,
+exports, and diagnostics.
+
+An authorized server administrator can list Vault item names over the encrypted
+Team connection. The list does not contain secret values. Showing or copying
+a key sends that value to the authorized client. A CSV import sends its selected
+contents to the host for local storage; it does not send them to the account
+service.
+
+Machine monitoring reads local disk, memory, and CPU use. Authorized server
+administrators can read these measurements and manage alerts through the
+encrypted Team connection. These measurements do not enable product telemetry.
+
+### Providers and connected services
 
 OpenBotFR is not an offline-only app. Codex, Claude, Grok, Gemini, Cursor, Cline,
 OpenCode, and other providers can send prompts, context, attached content, and

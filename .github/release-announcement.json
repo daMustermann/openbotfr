@@ -1,9 +1,10 @@
 {
-  "version": "0.51.1",
+  "version": "0.52.1",
   "highlights": [
-    "DeepSeek, Inception and OpenRouter now download the Pi CLI when you save their API key.",
-    "Closing the Linux AppImage no longer shows a crash report.",
-    "Gemini works again on Docker servers with LXCFS, and Claude agents on a server now respect its CPU limit.",
-    "Agents on a shared server no longer tell you to open the chat on another device."
+    "Keep API keys in the Vault: every agent on the server can use them, and the key never goes into the chat.",
+    "Remove the downloaded CLI of a provider that is off, in Settings > Providers, to free disk space.",
+    "Save a password that you type in the secure card to the Vault of a joined server.",
+    "Text that you do not send in a side thread now stays there after a turn ends or a restart.",
+    "OpenBot now quits fully when a file operation never finishes, and long Codex and Pi compactions run to the end."
   ]
 }

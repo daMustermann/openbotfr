@@ -137,6 +137,8 @@ import type {
   HostUpdateSettingsChange,
   HostUpdateStatus,
   IdleRestartTarget,
+  MacAutomationResult,
+  MacAutomationTarget,
   MacPermissionId,
   ProviderRuntimeSnapshot,
   SaveSetupInput,
@@ -295,6 +297,7 @@ import type {
   InstanceTransferResult,
   InstanceTransferSummary,
 } from "./ipc-instance-transfer";
+import type { MachineAlertSettings, MachineMetrics } from "./ipc-machine-resources";
 import type {
   AgentPublicationPreview,
   AgentSubmission,
@@ -438,6 +441,7 @@ import type {
   OldRuntimeVersions,
   OpenStorageLocationInput,
   OpenStoredFileInput,
+  ProviderRuntimeDownload,
   StorageDisk,
   StorageUsage,
 } from "./ipc-storage";
@@ -604,6 +608,9 @@ export const IPC_ENDPOINTS = {
     getAppInfo: request<undefined, AppInfo>()("app:get-info"),
     getSetupState: request<undefined, AppSetupState>()("app:get-setup-state"),
     saveSetup: request<SaveSetupInput, AppSetupState>()("app:save-setup"),
+    // A joined owner or admin can set the default provider of this computer (`provider-default-v1`),
+    // so main tells the window.
+    setupState: event<AppSetupState>()("app:setup-state"),
     getAnalyticsPreference: request<undefined, AnalyticsPreference>()("app:get-analytics-preference"),
     setAnalyticsPreference: request<SetAnalyticsPreferenceInput, AnalyticsPreference>()("app:set-analytics-preference"),
     getApprovalAutomation: request<undefined, ApprovalAutomationPreference>()("app:get-approval-automation"),
@@ -754,6 +761,10 @@ export const IPC_ENDPOINTS = {
     getStatus: request<undefined, ProviderRuntimeSnapshot>()("provider-runtimes:get-status"),
     download: request<ManagedProviderId, ProviderRuntimeSnapshot>()("provider-runtimes:download"),
     cancel: request<ManagedProviderId, ProviderRuntimeSnapshot>()("provider-runtimes:cancel"),
+    /** What `removeDownload` frees now: nothing while the provider is on. */
+    measureDownload: request<ManagedProviderId, ProviderRuntimeDownload>()("provider-runtimes:measure-download"),
+    /** Removes the downloaded CLI of a provider that is off. Rejects while it is on or downloading. */
+    removeDownload: request<ManagedProviderId, ProviderRuntimeSnapshot>()("provider-runtimes:remove-download"),
     /** Asks each provider's upstream for its latest release. Rejects when no source answered. */
     checkForUpdates: request<undefined, ProviderRuntimeSnapshot>()("provider-runtimes:check-for-updates"),
     event: event<ProviderRuntimeSnapshot>()("provider-runtimes:event"),
@@ -854,6 +865,10 @@ export const IPC_ENDPOINTS = {
     startPermissionAppDrag: request<undefined, void>()("computer-use:start-permission-app-drag"),
     revealPermissionApp: request<undefined, void>()("computer-use:reveal-permission-app"),
     highlightPlacement: event<ComputerUseHighlightPlacement>()("computer-use:highlight-placement"),
+  },
+  macAutomation: {
+    /** Sends one harmless Apple Event to each app, so macOS shows its Automation prompts now. */
+    request: request<readonly MacAutomationTarget[], MacAutomationResult[]>()("mac-automation:request"),
   },
   skills: {
     localList: request<undefined, MarketplaceSkillDetail[]>()("skills:local-list"),
@@ -1066,6 +1081,11 @@ export const IPC_ENDPOINTS = {
     // How many memories each agent of the server can keep, and the values its host permits.
     getAgentMemoryLimit: scopedQuery<HostAgentMemoryLimit, "required">()("host-admin:get-agent-memory-limit"),
     setAgentMemoryLimit: scopedRequest<number, HostAgentMemoryLimit, "required">()("host-admin:set-agent-memory-limit"),
+    // The machine alert levels and the member who gets the alert (`machine-resources-v1`).
+    getMachineAlerts: scopedQuery<MachineAlertSettings, "required">()("host-admin:get-machine-alerts"),
+    setMachineAlerts: scopedRequest<MachineAlertSettings, MachineAlertSettings, "required">()(
+      "host-admin:set-machine-alerts",
+    ),
     getPromptCacheTtl: scopedQuery<PromptCacheTtlSetting, "required">()("host-admin:get-prompt-cache-ttl"),
     setPromptCacheTtl: scopedRequest<PromptCacheTtl, PromptCacheTtlSetting, "required">()(
       "host-admin:set-prompt-cache-ttl",
@@ -1339,6 +1359,7 @@ export const IPC_ENDPOINTS = {
     interrupt: scopedRequest<InterruptTurnInput, void>()("agent:interrupt"),
     clearContext: scopedRequest<string, void>()("agent:clear-context"),
     compactContext: scopedRequest<string, void>()("agent:compact-context"),
+    compactTaskContext: scopedRequest<AgentTaskInput, void>()("agent:tasks:compact-context"),
     respondToPrompt: scopedRequest<RespondToPromptInput, void>()("agent:respond-to-prompt"),
     respondToApproval: scopedRequest<RespondToApprovalInput, void>()("agent:respond-to-approval"),
     respondToBrowserSecret: scopedRequest<LocalBrowserSecretResponse, void>()("agent:respond-to-browser-secret"),
@@ -1637,6 +1658,8 @@ export const IPC_ENDPOINTS = {
     getUsage: scopedRequest<GetStorageUsageInput, StorageUsage | null, "required">()("storage:get-usage"),
     // Free and total disk space with no scan, for the sidebar storage card. Null before `storage-disk-v1`.
     getDisk: scopedQuery<StorageDisk | null, "required">()("storage:get-disk"),
+    // Disk, memory, and CPU of the machine, for Server settings > Storage. Null before `machine-resources-v1`.
+    getMachineMetrics: scopedQuery<MachineMetrics | null, "required">()("storage:get-machine-metrics"),
     deleteFile: scopedRequest<DeleteStoredFileInput, void, "required">()("storage:delete-file"),
     clear: scopedRequest<ClearStorageInput, void, "required">()("storage:clear"),
     openFile: scopedRequest<OpenStoredFileInput, void, "required">()("storage:open-file"),
@@ -1753,6 +1776,7 @@ export const IPC_GROUP_PATHS = {
   dynamicIsland: "dynamicIsland",
   browserDock: "browserDock",
   computerUse: "computerUse",
+  macAutomation: "macAutomation",
   skills: "skills",
   customProviders: "customProviders",
   providerDetection: "providerDetection",

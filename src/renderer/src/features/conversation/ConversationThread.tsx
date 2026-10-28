@@ -1,12 +1,33 @@
+import { supportedAttachmentExtensions } from "@openbot/contracts/attachment-files";
+import { canPreviewAttachment } from "@openbot/contracts/ipc";
+import { Input } from "@openbot/ui";
 import type { AgentMessage } from "@openbot/ui/data";
+import { contextUsageView } from "@openbot/ui/features/conversation/ContextUsage";
 import { AgentThreadView } from "@openbot/ui/features/conversation/threads/AgentThreadView";
-import { createProjection, Show } from "solid-js";
+import { createProjection, createSignal, Show } from "solid-js";
 import { toAgentMessages } from "../../app-message-projection";
+import { ConversationBrowserTakeover } from "./ConversationBrowserTakeover";
 import { useConversationViewScope } from "./conversation-scope";
+
+/** A thread takes files only from this computer, which reads every supported type. */
+const THREAD_ATTACHMENT_ACCEPT = supportedAttachmentExtensions({ eml: true, media: true, zip: true, mp4: true })
+  .map((extension) => `.${extension}`)
+  .join(",");
 
 /** The open side thread of the agent, in the place of the agent's own chat and its message box. */
 export function ConversationThread() {
-  const { props, openExternalMessageUrl, previewAttachment, attachmentAction } = useConversationViewScope();
+  const {
+    props,
+    openExternalMessageUrl,
+    previewAttachment,
+    attachmentAction,
+    browserTakeoverResolution,
+    installedSkills,
+    installedSkillsLoadFailed,
+    mcpServers,
+    threadComposer,
+  } = useConversationViewScope();
+  const [picker, setPicker] = createSignal<HTMLInputElement>();
   /** Reconciled by id, so a stream chunk redraws only the message that changed. */
   const messages = createProjection<AgentMessage[]>(
     () => {
@@ -21,23 +42,66 @@ export function ConversationThread() {
     const threads = props.threads;
     return agent && threads ? { agent, threads } : undefined;
   };
+  /** Each thread keeps its unsent text while the agent works, and when another thread or chat opens. */
+  const draft = () => {
+    const key = threadComposer.openDraftKey();
+    return key ? threadComposer.draft(key) : undefined;
+  };
+  // The preload imports the picked files, and the view routes them to the open thread.
+  const openPicker = () => {
+    const input = picker();
+    if (!input) return;
+    input.value = "";
+    input.click();
+  };
   return (
     <Show when={view()}>
       {(current) => (
-        <AgentThreadView
-          task={current().threads.open ?? null}
-          limit={current().threads.limit}
-          agent={current().agent}
-          agents={props.agents}
-          messages={messages}
-          onSend={(text) => current().threads.onSend(text)}
-          onStop={() => current().threads.onStop()}
-          onOpenLink={(url) => void openExternalMessageUrl(url)}
-          onPreview={(attachment) => void previewAttachment(attachment)}
-          onAttachmentAction={attachmentAction}
-          approval={current().threads.approval}
-          onRespondApproval={(decision) => current().threads.onRespondApproval(decision)}
-        />
+        <>
+          <Show when={current().threads.acceptsFiles}>
+            <Input
+              ref={setPicker}
+              type="file"
+              accept={THREAD_ATTACHMENT_ACCEPT}
+              multiple
+              hidden
+              tabindex={-1}
+              data-openbot-attachment-picker="true"
+            />
+          </Show>
+          <AgentThreadView
+            task={current().threads.open ?? null}
+            limit={current().threads.limit}
+            agent={current().agent}
+            agents={props.agents}
+            messages={messages}
+            skills={installedSkills()}
+            skillsLoadFailed={installedSkillsLoadFailed()}
+            mcpServers={mcpServers()}
+            draft={draft()?.text ?? ""}
+            draftAttachments={draft()?.attachments}
+            onDraftChange={(text) => threadComposer.setText(threadComposer.openDraftKey(), text)}
+            onPasteFiles={threadComposer.pasteFiles}
+            onOpenDraftAttachment={(attachment) =>
+              canPreviewAttachment(attachment)
+                ? void previewAttachment(attachment)
+                : attachmentAction(attachment, "open")
+            }
+            onAttachFiles={current().threads.acceptsFiles ? openPicker : undefined}
+            onSend={(text) => threadComposer.send(current().threads, text)}
+            onStop={() => current().threads.onStop()}
+            onOpenLink={(url) => void openExternalMessageUrl(url)}
+            onPreview={(attachment) => void previewAttachment(attachment)}
+            onAttachmentAction={attachmentAction}
+            approval={current().threads.approval}
+            onRespondApproval={(decision) => current().threads.onRespondApproval(decision)}
+            context={contextUsageView(current().threads.contextState)}
+            onCompactContext={current().threads.onCompactContext}
+            attention={
+              props.browserTakeover || browserTakeoverResolution() ? <ConversationBrowserTakeover /> : undefined
+            }
+          />
+        </>
       )}
     </Show>
   );

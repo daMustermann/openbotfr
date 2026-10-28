@@ -6,6 +6,7 @@ import { composerDraftKey } from "./conversation-keys";
 import type { ComposerDraft } from "./conversation-types";
 
 const COMPOSER_DRAFTS_STORAGE_KEY = "openbot:composer-drafts";
+const THREAD_DRAFTS_STORAGE_KEY = "openbot:thread-drafts:v1";
 const WRITE_DELAY_MS = 300;
 
 type Drafts = Record<string, ComposerDraft>;
@@ -13,11 +14,14 @@ type Drafts = Record<string, ComposerDraft>;
 export interface StoredComposerDrafts {
   agents: Drafts;
   channels: Drafts;
+  /** The message box of each side thread, keyed by `threadDraftKey`. */
+  threads: Drafts;
 }
 
 interface ComposerDraftOwner {
   drafts: () => Drafts;
   channelDrafts: () => Drafts;
+  threadDrafts: () => Drafts;
   editingAgentId: () => string | null;
   editingServerId: () => string | null;
   editingDraftBackup: () => ComposerDraft | null;
@@ -34,17 +38,32 @@ interface ComposerDraftOwner {
  * the reply.
  */
 export function readStoredComposerDrafts(): StoredComposerDrafts {
+  let drafts: StoredComposerDrafts = { agents: {}, channels: {}, threads: {} };
   try {
-    return decodeStoredDrafts(JSON.parse(window.localStorage.getItem(COMPOSER_DRAFTS_STORAGE_KEY) ?? "null"));
+    drafts = decodeStoredDrafts(JSON.parse(window.localStorage.getItem(COMPOSER_DRAFTS_STORAGE_KEY) ?? "null"));
   } catch {
-    return { agents: {}, channels: {} };
+    // Read the separate thread drafts even when the legacy record cannot be read.
   }
+  try {
+    const stored = window.localStorage.getItem(THREAD_DRAFTS_STORAGE_KEY);
+    if (stored !== null) drafts.threads = decodeThreadDrafts(JSON.parse(stored));
+    // Copy the first format before a released writer can replace it. Keep the legacy source.
+    else if (Object.keys(drafts.threads).length > 0)
+      window.localStorage.setItem(THREAD_DRAFTS_STORAGE_KEY, JSON.stringify(storableThreadDrafts(drafts.threads)));
+  } catch {
+    // A failed copy keeps the first format available for this session.
+  }
+  return drafts;
 }
 
 function decodeStoredDrafts(value: unknown): StoredComposerDrafts {
   return isDynamicRecord(value)
-    ? { agents: decodeDrafts(value.agents), channels: decodeDrafts(value.channels) }
-    : { agents: {}, channels: {} };
+    ? {
+        agents: decodeDrafts(value.agents),
+        channels: decodeDrafts(value.channels),
+        threads: decodeThreadDrafts(value.threads),
+      }
+    : { agents: {}, channels: {}, threads: {} };
 }
 
 /**
@@ -71,9 +90,18 @@ export function writeComposerDraftsOnChange(owner: ComposerDraftOwner): void {
       agents[key] = { ...draft, text: [...texts, draft.text].filter((text) => text.trim()).join("\n\n") };
     }
     try {
+      // Save thread drafts first. A failed write must not remove their first format from the
+      // legacy record. Released writers change only that legacy record.
+      window.localStorage.setItem(
+        THREAD_DRAFTS_STORAGE_KEY,
+        JSON.stringify(storableThreadDrafts(owner.threadDrafts())),
+      );
       window.localStorage.setItem(
         COMPOSER_DRAFTS_STORAGE_KEY,
-        JSON.stringify({ agents: storableDrafts(agents), channels: storableDrafts(owner.channelDrafts()) }),
+        JSON.stringify({
+          agents: storableDrafts(agents),
+          channels: storableDrafts(owner.channelDrafts()),
+        }),
       );
     } catch {
       // Storage is full or unavailable. The drafts stay in memory for this session.
@@ -84,6 +112,7 @@ export function writeComposerDraftsOnChange(owner: ComposerDraftOwner): void {
       [
         owner.drafts(),
         owner.channelDrafts(),
+        owner.threadDrafts(),
         owner.editingAgentId(),
         owner.editingDraftBackup(),
         owner.unsentTexts(),
@@ -113,6 +142,11 @@ function storableDrafts(drafts: Drafts): Record<string, { text: string }> {
   );
 }
 
+/** A side thread's draft is stored as its text only, as `storableDrafts` keeps it. */
+function storableThreadDrafts(drafts: Drafts): Record<string, string> {
+  return Object.fromEntries(Object.entries(storableDrafts(drafts)).map(([key, draft]) => [key, draft.text]));
+}
+
 function decodeDrafts(value: unknown): Drafts {
   if (!isDynamicRecord(value)) return {};
   return Object.fromEntries(
@@ -120,6 +154,15 @@ function decodeDrafts(value: unknown): Drafts {
       isDynamicRecord(draft) && isString(draft.text)
         ? [[key, { text: draft.text, attachments: [], replyToMessageId: null }]]
         : [],
+    ),
+  );
+}
+
+function decodeThreadDrafts(value: unknown): Drafts {
+  if (!isDynamicRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([key, text]) =>
+      isString(text) ? [[key, { text, attachments: [], replyToMessageId: null }]] : [],
     ),
   );
 }

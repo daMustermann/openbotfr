@@ -7,9 +7,12 @@ const WorkspacePreferences = Schema.Struct({
   pinned: Schema.mutableKey(Schema.mutable(Schema.Array(Schema.String))),
   pinnedChannels: Schema.mutableKey(Schema.optional(Schema.mutable(Schema.Array(Schema.String)))),
   hiddenChannels: Schema.mutableKey(Schema.optional(Schema.mutable(Schema.Array(Schema.String)))),
+  /** Workflow pins are stored separately from the record that released clients write. */
+  pinnedWorkflows: Schema.mutableKey(Schema.optional(Schema.mutable(Schema.Array(Schema.String)))),
 });
 export type RemoteWorkspacePreferences = typeof WorkspacePreferences.Type;
 const StoredPreferences = Schema.Struct({ version: Schema.Literal(1), ...WorkspacePreferences.fields });
+const StoredWorkflowPins = Schema.Struct({ version: Schema.Literal(1), pinned: Schema.Array(Schema.String) });
 
 class WorkspacePreferencesError extends Schema.TaggedError<WorkspacePreferencesError>()("WorkspacePreferencesError", {
   message: Schema.String,
@@ -22,34 +25,52 @@ export function createWorkspacePreferences(
 ) {
   const scope = remoteHostFingerprint(JSON.stringify([new URL(apiUrl).origin, userId]));
   const key = (hostId: string) => `openbot.workspace.v1.${scope}.${remoteHostFingerprint(hostId)}`;
+  const workflowKey = (hostId: string) => `openbot.workflow-pins.v1.${scope}.${remoteHostFingerprint(hostId)}`;
   // Keep the cache in this store: mobile reads can otherwise make a Keychain call for every message.
   const cache = new Map<string, RemoteWorkspacePreferences>();
   const read = Effect.fn("WorkspacePreferences.read")(function* (hostId: string) {
     const cached = cache.get(hostId);
     if (cached) return cached;
     const stored = yield* preferencesCall(() => storage.get(key(hostId)));
-    if (!stored) {
-      const empty: RemoteWorkspacePreferences = { hidden: [], pinned: [] };
-      cache.set(hostId, empty);
-      return empty;
-    }
-    const parsed = yield* preferencesCall(() => JSON.parse(stored));
+    const parsed = stored ? yield* preferencesCall(() => JSON.parse(stored)) : { version: 1, hidden: [], pinned: [] };
     const value = yield* Schema.decodeUnknownEffect(StoredPreferences)(parsed).pipe(
       Effect.mapError(
         () => new WorkspacePreferencesError({ message: sourceText("error.remote.preferencesUnreadable") }),
       ),
     );
+    const workflowPins = yield* preferencesCall(() => storage.get(workflowKey(hostId)));
+    const pinnedWorkflows =
+      workflowPins !== null
+        ? (yield* Schema.decodeUnknownEffect(StoredWorkflowPins)(
+            yield* preferencesCall(() => JSON.parse(workflowPins)),
+          ).pipe(
+            Effect.mapError(
+              () => new WorkspacePreferencesError({ message: sourceText("error.remote.preferencesUnreadable") }),
+            ),
+          )).pinned.slice()
+        : value.pinnedWorkflows;
+    // Copy the first format before a released client can replace it. An empty separate record
+    // takes priority too, so an unpinned workflow does not return from the first format.
+    if (workflowPins === null && pinnedWorkflows)
+      yield* preferencesCall(() =>
+        storage.set(workflowKey(hostId), JSON.stringify({ version: 1, pinned: pinnedWorkflows })),
+      );
     const preferences: RemoteWorkspacePreferences = {
       hidden: value.hidden,
       pinned: value.pinned,
       ...(value.pinnedChannels ? { pinnedChannels: value.pinnedChannels } : {}),
       ...(value.hiddenChannels ? { hiddenChannels: value.hiddenChannels } : {}),
+      ...(pinnedWorkflows ? { pinnedWorkflows } : {}),
     };
     cache.set(hostId, preferences);
     return preferences;
   });
   const write = Effect.fn("WorkspacePreferences.write")(function* (hostId: string, value: RemoteWorkspacePreferences) {
-    yield* preferencesCall(() => storage.set(key(hostId), JSON.stringify({ version: 1, ...value })));
+    const { pinnedWorkflows, ...legacy } = value;
+    yield* preferencesCall(() =>
+      storage.set(workflowKey(hostId), JSON.stringify({ version: 1, pinned: pinnedWorkflows ?? [] })),
+    );
+    yield* preferencesCall(() => storage.set(key(hostId), JSON.stringify({ version: 1, ...legacy })));
     cache.set(hostId, value);
   });
   return {

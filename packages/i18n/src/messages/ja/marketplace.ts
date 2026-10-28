@@ -122,6 +122,23 @@ export const messages = {
   "marketplace.app.setup.desktopConnected": "{address} に接続済みです。",
   "marketplace.app.setup.open": "サインインもキーも不要です。",
   "marketplace.app.connectAgain": "もう一度接続",
+  "marketplace.app.automation.askOnInstall": "インストール時に macOS にアクセスを求める",
+  "marketplace.app.automation.title": "Apple アプリへのアクセス",
+  "marketplace.app.automation.description":
+    "macOS はアプリごとに確認を表示します。閉じているアプリは一時的に開き、その後終了します。",
+  "marketplace.app.automation.request": "アクセスを求める",
+  "marketplace.app.automation.allowed": "OpenBot はすべての Apple アプリを操作できるようになりました。",
+  "marketplace.app.automation.refused":
+    "macOS は {apps} へのアクセスを許可しませんでした。システム設定 › プライバシーとセキュリティ › オートメーション で OpenBot を許可してください。",
+  "marketplace.app.automation.failed":
+    "OpenBot は {apps} について macOS に確認できませんでした。もう一度お試しください。",
+  "marketplace.app.automation.app.calendar": "カレンダー",
+  "marketplace.app.automation.app.contacts": "連絡先",
+  "marketplace.app.automation.app.mail": "メール",
+  "marketplace.app.automation.app.notes": "メモ",
+  "marketplace.app.automation.app.reminders": "リマインダー",
+  "marketplace.app.automation.app.messages": "メッセージ",
+  "marketplace.app.automation.app.safari": "Safari",
   "marketplace.app.signInTitle": "{name} にもう一度サインインしてください",
   "marketplace.app.signInDescription":
     "{name} が保存済みのサインインを拒否しました。もう一度サインインするまで、エージェントはこのアプリを使用できません。",
@@ -195,7 +212,7 @@ export const messages = {
     "開いている Paper のファイルにあるデザイントークンを一覧にして、私たちのテーマと比較してください。",
   "marketplace.plugin.appleApps.tagline": "Mac のメール、カレンダーなど",
   "marketplace.plugin.appleApps.description":
-    "Apple apps を使うと、エージェントはこの Mac のメール、カレンダー、連絡先、リマインダー、メモ、メッセージ、Safari を使えます。macOS でのみ動作します。OpenBot は mcp-icloud を起動します。これは Apple や OpenBot が作ったものではない、コミュニティのサーバーです。サーバーはこのコンピューター上で AppleScript を使ってアプリを操作し、アカウントもキーも不要です。エージェントが初めてアプリを使うとき、macOS は OpenBot にそのアプリの操作を許可するか確認します。後で変更するには、システム設定 › プライバシーとセキュリティ › オートメーション を開いてください。エージェントはメールや iMessage を送信し、イベント、連絡先、リマインダーを変更・削除できるので、承認する前に各書き込みを確認してください。ツールが読んだ内容（メールの本文など）は、エージェントのモデルプロバイダーに送られます。",
+    "Apple apps を使うと、エージェントはこの Mac のメール、カレンダー、連絡先、リマインダー、メモ、メッセージ、Safari を使えます。macOS でのみ動作します。OpenBot は mcp-icloud を起動します。これは Apple や OpenBot が作ったものではない、コミュニティのサーバーです。サーバーはこのコンピューター上で AppleScript を使ってアプリを操作し、アカウントもキーも不要です。インストール時に、OpenBot はこれらすべてのアプリへのアクセスを macOS にまとめて求めることができます。確認はアプリごとに 1 回表示されます。求めない場合は、エージェントが初めてアプリを使うときに macOS が確認します。後で変更するには、システム設定 › プライバシーとセキュリティ › オートメーション を開いてください。エージェントはメールや iMessage を送信し、イベント、連絡先、リマインダーを変更・削除できるので、承認する前に各書き込みを確認してください。ツールが読んだ内容（メールの本文など）は、エージェントのモデルプロバイダーに送られます。",
   "marketplace.plugin.appleApps.app":
     "メール、カレンダー、連絡先、リマインダー、メモ、メッセージ、Safari を、ローカルの mcp-icloud サーバーで操作します。macOS とオートメーションの許可が必要です。",
   "marketplace.plugin.appleApps.prompt.unread": "Apple のメールで、今日の未読メールを要約してください。",
@@ -378,6 +395,14 @@ export const messages = {
   "marketplace.plugin.todoist.prompt.today": "今日が期限の Todoist タスクはどれですか？",
   "marketplace.plugin.todoist.prompt.capture": "これらのアクション項目を Todoist のインボックスに追加してください。",
   "marketplace.plugin.todoist.prompt.overdue": "期限切れの Todoist タスクを明日に移してください。",
+  "marketplace.plugin.trello.tagline": "ボード、リスト、カード",
+  "marketplace.plugin.trello.description":
+    "Trello を使うと、エージェントはボード、リスト、カード、チェックリスト、コメントを検索して読み、ボードとカードを作成し、リストとカードを移動し、カードを完了にし、チェックリスト、コメント、ラベルを追加できます。また、ユーザーの Trello インボックスのカードを読んで追加し、Planner の予定を読むこともできます。予定は、接続された Google または Outlook のカレンダーから来ることがあります。各ユーザーはブラウザーで自分の Trello アカウントにサインインし、同意画面でワークスペースを選びます。エージェントには、それらのワークスペースでユーザーと同じ権限があります。カードとリストをアーカイブできますが、サーバーは何も完全には削除できません。",
+  "marketplace.plugin.trello.app":
+    "ボード、リスト、カードを、ブラウザーでサインインする Trello の MCP サーバーで提供します。",
+  "marketplace.plugin.trello.prompt.myCards": "自分に割り当てられた Trello カードはどれですか？",
+  "marketplace.plugin.trello.prompt.board": "Trello ボードで進行中の作業をまとめてください。",
+  "marketplace.plugin.trello.prompt.newCards": "これらのアクション項目をカードとして Trello ボードに追加してください。",
   "marketplace.plugin.huggingface.tagline": "Hub のモデル、データセット、論文",
   "marketplace.plugin.huggingface.description":
     "Hugging Face を使うと、エージェントは Hugging Face Hub のモデル、データセット、Spaces、コレクション、論文を検索し、モデルカードやリポジトリのファイルを読み、データセットをプレビューし、Hugging Face のドキュメントを検索できます。公開されている Hub のデータを使うので、アカウントもキーも不要です。ツールは読み取り専用で、エージェントはリポジトリの作成やジョブの実行はできません。",

@@ -61,6 +61,12 @@ export const PLUGIN_CATALOG_INDEX: PluginCatalogIndex = {
       detailSha256: "5ead5bab31fb150bf62410b0f4f59106c1e0aa6b00c8449bd8a0d0557cfd48c5",
     },
     {
+      slug: "trello",
+      version: "1.0.0",
+      featured: false,
+      detailSha256: "f85666d6f360a29f8cb29be4c7fd992e1c0d018b5b1a0f5c59cadddefa6883b8",
+    },
+    {
       slug: "cobrain",
       version: "1.0.0",
       featured: false,
@@ -80,9 +86,9 @@ export const PLUGIN_CATALOG_INDEX: PluginCatalogIndex = {
     },
     {
       slug: "apple-apps",
-      version: "1.0.0",
+      version: "1.1.0",
       featured: false,
-      detailSha256: "2fa7aa1147b2b392efd666efa5052f7cacb225868e936a5318ab26b451a57e25",
+      detailSha256: "ee3aa4ba4d11b38bea38f703959868cfb6bb5cf4ac5d3ef7a998e4a40a345984",
     },
     {
       slug: "sentry",
@@ -206,6 +212,7 @@ export interface PluginCatalogApp {
   description: string;
   iconUrl: string | null;
   server: PluginCatalogServer;
+  macAutomation?: string[];
 }
 
 export type PluginCatalogServer =
@@ -487,6 +494,40 @@ export const PLUGIN_CATALOG_DETAILS: Record<string, PluginCatalogDetail> = {
     termsUrl: "https://www.todoist.com/terms-of-service",
     skills: [],
   },
+  trello: {
+    slug: "trello",
+    name: "Trello",
+    tagline: "Boards, lists and cards",
+    description:
+      "Trello lets agents search and read boards, lists, cards, checklists and comments, create boards and cards, move lists and cards, mark cards done, and add checklists, comments and labels. Agents can also read and add cards in the user's Trello Inbox, and read Planner events, which can come from a connected Google or Outlook calendar. Each user signs in to their own Trello account through the browser and chooses the workspaces on a consent screen. Agents get the same permissions as the user in those workspaces. They can archive cards and lists, but the server cannot delete anything permanently.",
+    category: "productivity",
+    creatorName: "Atlassian",
+    iconUrl: "https://trello.com/favicon.ico",
+    version: "1.0.0",
+    prompts: [
+      { id: "prompt-my-cards", text: "Which Trello cards are assigned to me?" },
+      { id: "prompt-board", text: "Summarize what is in progress on my Trello board." },
+      { id: "prompt-new-cards", text: "Add these action items as cards to my Trello board." },
+    ],
+    apps: [
+      {
+        id: "app-trello-mcp",
+        name: "Trello",
+        description: "Boards, lists, and cards, over Trello's MCP server with browser sign-in.",
+        iconUrl: "https://trello.com/favicon.ico",
+        server: {
+          name: "trello",
+          transport: "http",
+          url: "https://mcp.trello.com/v1",
+          auth: [{ id: "trello-oauth", kind: "link", label: "Sign in" }],
+        },
+      },
+    ],
+    websiteUrl: "https://trello.com",
+    privacyPolicyUrl: "https://www.atlassian.com/legal/privacy-policy",
+    termsUrl: "https://www.atlassian.com/legal/atlassian-customer-agreement",
+    skills: [],
+  },
   cobrain: {
     slug: "cobrain",
     name: "Cobrain",
@@ -608,11 +649,11 @@ export const PLUGIN_CATALOG_DETAILS: Record<string, PluginCatalogDetail> = {
     name: "Apple apps",
     tagline: "Mail, Calendar and more on your Mac",
     description:
-      "Apple apps lets agents use Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari on this Mac. It works on macOS only. OpenBot starts mcp-icloud, a community server that is not made by Apple or OpenBot. The server controls the apps through AppleScript, on this computer, and needs no account and no key. The first time an agent uses an app, macOS asks if OpenBot can control it. To change this later, open System Settings › Privacy & Security › Automation. Agents can send email and iMessages, and change or delete events, contacts and reminders, so review each write before you approve it. What the tools read, such as email text, goes to the model provider of the agent.",
+      "Apple apps lets agents use Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari on this Mac. It works on macOS only. OpenBot starts mcp-icloud, a community server that is not made by Apple or OpenBot. The server controls the apps through AppleScript, on this computer, and needs no account and no key. When you install it, OpenBot can ask macOS for access to all of these apps at once, with one prompt for each app. If you do not, macOS asks the first time an agent uses an app. To change this later, open System Settings › Privacy & Security › Automation. Agents can send email and iMessages, and change or delete events, contacts and reminders, so review each write before you approve it. What the tools read, such as email text, goes to the model provider of the agent.",
     category: "productivity",
     creatorName: "MrGo2",
     iconUrl: "https://www.apple.com/favicon.ico",
-    version: "1.0.0",
+    version: "1.1.0",
     prompts: [
       { id: "prompt-unread", text: "Summarize my unread email in Apple Mail from today." },
       { id: "prompt-today", text: "What is on my Apple Calendar today and tomorrow?" },
@@ -629,6 +670,7 @@ export const PLUGIN_CATALOG_DETAILS: Record<string, PluginCatalogDetail> = {
           "Mail, Calendar, Contacts, Reminders, Notes, Messages and Safari, over the local mcp-icloud server. Needs macOS and Automation access.",
         iconUrl: "https://www.apple.com/favicon.ico",
         server: { name: "apple-apps", transport: "stdio", command: "npx", args: ["-y", "mcp-icloud@2.1.3"] },
+        macAutomation: ["calendar", "contacts", "mail", "notes", "reminders", "messages", "safari"],
       },
     ],
     websiteUrl: "https://github.com/MrGo2/icloud-mcp",

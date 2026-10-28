@@ -303,6 +303,11 @@ is one folder per plugin in [`marketplace/plugin-catalog/`](../../marketplace/pl
      registration, PKCE and refresh. The tokens stay in encrypted storage. No bridge program.
    - `key`: one or two fields that go into a `header` (http) or an `env` value (stdio).
    - `local`: steps that the user does on the computer that runs the server.
+
+   A `stdio` app that drives Apple apps through AppleScript lists them in `macAutomation`
+   (`calendar`, `contacts`, `mail`, `notes`, `reminders`, `messages`, `safari`). On a Mac that runs
+   the server, the listing page can then ask macOS for each app at install
+   ([`mac-automation.ts`](../../src/main/mac-automation.ts)). The mobile copy leaves the field out.
 3. Never put a secret in the catalog. The user types it in the connect dialog.
 4. Build and check the generated files:
    ```sh
@@ -462,6 +467,12 @@ it unlocks the vault and finds the folder `Shared with OpenBot`, and unlocks aga
 restart. The host must reach the server address over HTTPS; the instance firewall of
 [several instances on one host](../docker.md#several-instances-on-one-host) blocks private
 addresses. A host older than this capability hides Bitwarden.
+
+The phone uses the same routes in Server settings › Connectors › Bitwarden
+(`apps/mobile/src/features/servers/components/bitwarden-connector-page.tsx`). It reads `status`
+every 3 seconds while the page shows, as for the other connectors, and keeps no copy of the API key
+or the master password. For a host older than this capability, the phone shows Bitwarden as
+"Desktop app only", with no action.
 
 ## Add a Team API capability
 
