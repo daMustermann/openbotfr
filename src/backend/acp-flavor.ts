@@ -75,6 +75,8 @@ export interface AcpFlavor {
    * replaces the server that the others in it use. Their OpenBot servers then share one token.
    */
   mcpServersPerDirectory?: true;
+  /** Keep OpenBot tools discoverable without adding the direct tools to Kilo's large tool set. */
+  compactOpenBotTools?: true;
   /** OpenBot compacts by replacing the session, for an agent that reports `usage_update` and has no compact request. */
   contextCompaction?: "handoff";
   /** A whole answer chunk that is the agent's own transport error, not answer text. OpenBot drops it. */
@@ -115,7 +117,10 @@ const OMP_ACP_FLAVOR: AcpFlavor = { sessionNotFound: ompSessionNotFound };
  */
 const CUSTOM_ACP_FLAVOR: AcpFlavor = { sessionNotFound: ompSessionNotFound };
 
-const CUSTOM_AGENT_FLAVORS: Readonly<Partial<Record<string, AcpFlavor>>> = { omp: OMP_ACP_FLAVOR };
+const CUSTOM_AGENT_FLAVORS: Readonly<Partial<Record<string, AcpFlavor>>> = {
+  omp: OMP_ACP_FLAVOR,
+  kilo: { ...CUSTOM_ACP_FLAVOR, compactOpenBotTools: true },
+};
 
 /**
  * The flavor of a custom agent, from the exact name of its command: `omp`, `/usr/local/bin/omp`

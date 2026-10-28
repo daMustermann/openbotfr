@@ -1306,7 +1306,18 @@ export class AcpAgentClient extends EventEmitter<ClientEvents> {
       return yield* providerFailure(new Error(`Unknown ACP session: ${requestedThreadId}`));
     }
     const cwd = yield* providerSync(() => requiredString(params, "cwd"));
-    const dynamicTools = getArray(params, "dynamicTools").filter(isDynamicToolNamespace);
+    const dynamicTools = getArray(params, "dynamicTools")
+      .filter(isDynamicToolNamespace)
+      .map((namespace) =>
+        this.#flavor.compactOpenBotTools && namespace.name === "openbot"
+          ? {
+              ...namespace,
+              tools: namespace.tools.filter(
+                (tool) => tool.name === "tool_search" || tool.name === "tool_describe" || tool.name === "tool_call",
+              ),
+            }
+          : namespace,
+      );
     const computerUse = computerUseParam(params);
     let threadRef: AcpThread | null = null;
     let retained = false;
