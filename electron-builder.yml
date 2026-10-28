@@ -1,5 +1,9 @@
 appId: app.openbot.desktop
 productName: OpenBotFR
+publish:
+  provider: github
+  owner: daMustermann
+  repo: openbotfr
 copyright: Copyright © 2026 Synthetify Labs spółka z ograniczoną odpowiedzialnością
 protocols:
   - name: OpenBotFR invitations

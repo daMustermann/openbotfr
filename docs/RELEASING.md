@@ -2,7 +2,7 @@
 
 ## OpenBotFR Windows-only fork release
 
-OpenBotFR currently publishes a Windows x64 installer and an unpacked ZIP from the fork at
+OpenBotFR publishes a Windows x64 installer and an unpacked ZIP from the fork at
 `daMustermann/openbotfr`. Its release tag has the format `openbotfr-v<version>`.
 The fork release does not run the upstream multi-platform tag workflow, publish a Docker
 image, deploy an account Worker, or publish a hosted-server snapshot. The Cloudflare
@@ -10,13 +10,18 @@ production CI job is restricted to the upstream repository.
 
 For OpenBotFR, check the Windows installer and unpacked application with
 `bun run verify:package:win` after `bun run dist:win`; check hashes for both files; publish
-the Windows artifacts and `SHA256SUMS.txt` to GitHub Releases. Make the release notes
+the Windows artifacts, `latest.yml`, the installer `.exe.blockmap`, and `SHA256SUMS.txt`
+to a non-draft GitHub Release. Keep the existing `openbotfr-v<version>` tag format and
+ensure each release uses a higher application version. In-app updates use the fork's
+GitHub feed and the NSIS blockmap to download changed blocks where supported.
+Keep the prior installer available as the rollback path, subject to database migration safety.
+Make the release notes
 clear about disabled desktop telemetry, optional self-hosting, remaining network paths,
 unsigned binaries, and checks that have not run. The initial release is documented in
 [OpenBotFR 0.51.1](releases/openbotfr-v0.51.1.md).
 
 The remainder of this guide is the **upstream OpenBot release procedure**. Its signing,
-cloud deployment, and auto-update steps do not apply to the Windows-only OpenBotFR release.
+cloud deployment, and multi-platform auto-update steps do not apply to the Windows-only OpenBotFR release.
 
 For iOS builds uploaded to TestFlight through GitHub Actions, see
 [the mobile release guide](../apps/mobile/README.md#github-actions-testflight-release). For Android

@@ -1,5 +1,6 @@
 import { isManagedRuntimeProvider } from "@openbot/contracts/agent-providers";
-import { Effect, Fiber } from "effect";
+import { Effect, Fiber, Schema } from "effect";
+import { parse as parseYaml } from "yaml";
 import { toAgentRemovalFailed } from "../backend/agent/agent-removal";
 import { toHostedSiteOperationFailed } from "../backend/agent/hosted-site-coordinator";
 import { AgentApiKeys } from "../backend/agent-api-keys";
@@ -59,7 +60,7 @@ import { RemoteWorkflowError, toRemoteWorkflowError } from "./remote-service-eff
  * when - see `teardown-registry.ts` for why shutdown here is not the reverse of construction.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readdir, rm } from "node:fs/promises";
 import { homedir, hostname, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -2744,8 +2745,24 @@ export async function createApplicationServices({
       process.platform === "linux" &&
       (process.env.OPENBOT_HOSTED_SERVER === "1" || installationMode === "self") &&
       existsSync(HOSTED_UPDATE_TRIGGER));
-  // The upstream installer must not replace OpenBotFR with an OpenBot release.
-  const updatesEnabled = false;
+  // Only a packaged OpenBotFR build with the pinned fork feed can install desktop updates.
+  const updatesEnabled =
+    updateMetadataAvailable &&
+    isValidSemver(currentVersion) &&
+    (() => {
+      try {
+        const feed = Schema.decodeUnknownSync(
+          Schema.Struct({
+            provider: Schema.Literal("github"),
+            owner: Schema.Literal("daMustermann"),
+            repo: Schema.Literal("openbotfr"),
+          }),
+        )(parseYaml(readFileSync(join(process.resourcesPath, "app-update.yml"), "utf8"), { uniqueKeys: true }));
+        return feed.provider === "github";
+      } catch {
+        return false;
+      }
+    })();
   if (app.isPackaged && updateMetadataAvailable && !isValidSemver(currentVersion)) {
     logger.warn(`OpenBot updates are disabled because the application version is not valid SemVer: ${currentVersion}`);
   }

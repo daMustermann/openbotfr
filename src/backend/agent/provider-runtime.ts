@@ -87,6 +87,7 @@ import {
   isAcpHandlerDiagnostic,
   isBackgroundRefreshDiagnostic,
   isBundledSandboxFallbackDiagnostic,
+  isCodexBridgeRetryDiagnostic,
   isCodexCredentialFallbackDiagnostic,
   isGlogBelowErrorDiagnostic,
   isIgnoredConfigDiagnostic,
@@ -3363,6 +3364,13 @@ export class ProviderRuntime implements ProviderPort {
       const message = shortenDiagnostic(this.#redactMcp(raw));
       if (client.provider === "codex" && isCodexCredentialFallbackDiagnostic(raw)) {
         logger.info("Codex completed a credential storage fallback.", { provider: client.provider, message });
+        return;
+      }
+      if (client.provider === "codex" && isCodexBridgeRetryDiagnostic(message)) {
+        stderrLogger.warn("Codex reported a recoverable bridge or tool-output diagnostic.", {
+          provider: client.provider,
+          message,
+        });
         return;
       }
       // An agent that tears down its sessions while OpenBot stops it (idle release, restart, quit)

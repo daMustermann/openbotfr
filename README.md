@@ -5,9 +5,9 @@
 OpenBotFR is a local-first fork of OpenBot for persistent AI agents. Start the desktop app
 without a hosted OpenBot account. Your workspaces and conversations stay on your computer.
 
-**Windows x64 release:** [Download OpenBotFR 0.51.1](https://github.com/daMustermann/openbotfr/releases/tag/openbotfr-v0.51.1).
+**Windows x64 release:** [Download the current OpenBotFR release](https://github.com/daMustermann/openbotfr/releases/latest).
 The installer is unsigned. See the [privacy notes](PRIVACY.md) and
-[release details](docs/releases/openbotfr-v0.51.1.md) before installation.
+[release details](docs/RELEASING.md) before installation.
 The fork supports the local
 [Codex App Server](https://learn.chatgpt.com/docs/app-server) and
 [Claude Code](https://code.claude.com/docs/en/overview), plus [Grok CLI](https://docs.x.ai/build/overview),
@@ -44,9 +44,9 @@ visited pages use the network, and installed plugins may connect to their own se
 
 ## Install
 
-Download the [Windows x64 NSIS installer](https://github.com/daMustermann/openbotfr/releases/download/openbotfr-v0.51.1/OpenBotFR-0.51.1-x64.exe)
-or the [unpacked Windows ZIP](https://github.com/daMustermann/openbotfr/releases/download/openbotfr-v0.51.1/OpenBotFR-0.51.1-win-x64-unpacked.zip).
-Use [SHA256SUMS.txt](https://github.com/daMustermann/openbotfr/releases/download/openbotfr-v0.51.1/SHA256SUMS.txt)
+Download the Windows x64 NSIS installer or unpacked ZIP from the
+[latest release](https://github.com/daMustermann/openbotfr/releases/latest).
+Use its `SHA256SUMS.txt`
 to check the download. These binaries are unsigned and may display a Windows SmartScreen warning.
 An upgrade from a previous OpenBot installer has not yet been tested on a real installed profile.
 This fork currently publishes Windows x64 binaries only.
@@ -562,6 +562,10 @@ described above.
 Build packages locally with the commands under [Install](#install). The existing
 GitHub release workflow and [release guide](docs/RELEASING.md) still target the
 upstream infrastructure. They do not prove that OpenBotFR has published a release.
+Packaged Windows builds with the OpenBotFR update feed can check for new versions
+inside the app. Each new release must include `latest.yml`, the NSIS installer,
+and its `.blockmap`. Older installations need one manual installer upgrade to
+enable in-app updates.
 The remote host release check is disabled by default. Setting
 `OPENBOTFR_USE_UPSTREAM_RELEASES=1` enables an upstream compatibility check;
 the upstream feed does not supply OpenBotFR updates.

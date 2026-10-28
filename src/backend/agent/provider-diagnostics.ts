@@ -201,6 +201,15 @@ export function isBackgroundRefreshDiagnostic(message: string): boolean {
   return /\bcodex_models_manager\b.*\bfailed to refresh available models\b|\bSettings fetch failed\b/.test(message);
 }
 
+/** Codex may retry a local Responses bridge over HTTP after its WebSocket upgrade is rejected. */
+export function isCodexBridgeRetryDiagnostic(message: string): boolean {
+  return (
+    /codex_api::endpoint::responses_websocket: failed to connect to websocket: HTTP error: 426 Upgrade Required, url: ws:\/\/127\.0\.0\.1:\d+\/v1\/responses/.test(
+      message,
+    ) || /codex_core::util: Orphan function call output for call id:/.test(message)
+  );
+}
+
 /**
  * Whether a provider diagnostic is Grok's own record of a failed usage reading.
  *
